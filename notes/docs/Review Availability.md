@@ -1,0 +1,2 @@
+- not visible until availability is submitted
+- app displays a heat map of all submitted [[../types/availability day]]s

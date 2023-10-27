@@ -1,0 +1,2 @@
+- notifications start 2 days before the first scheduled day 
+- is a chance for users to input their [[../types/availability day]]s for the active office [[schedule]]

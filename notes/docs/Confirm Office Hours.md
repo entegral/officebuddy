@@ -1,0 +1,2 @@
+- clicking/marking an availability day confirms you will attend that day
+	- indicated by [[a clear UI signal]] 

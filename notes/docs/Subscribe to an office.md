@@ -1,0 +1,2 @@
+- users are free to subscribe to any office they subscribe to
+- subscriptions are a bidirectional link between a [[user]] and an office

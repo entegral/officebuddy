@@ -1,0 +1,4 @@
+- [[message board#feed]] notifications
+- announcement notifications
+- configurable w/ [[user settings]]
+- [[doorbell]] - notify people if a person without a key needs to be let in
