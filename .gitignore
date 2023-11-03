@@ -19,6 +19,9 @@
 .env.test.local
 .env.production.local
 
+/UI/.DS_Store
+/notes/.DS_Store
+
 .nvmrc
 
 npm-debug.log*
