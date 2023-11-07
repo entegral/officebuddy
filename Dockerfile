@@ -4,9 +4,10 @@ FROM golang:1.21
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
-RUN go mod download
-COPY ./app ./
-RUN CGO_ENABLED=0 GOOS=linux go build -o /containerized-office-buddies ./server.go
+RUN git config --global url.ssh://git@github.com/.insteadOf https://github.com/
+COPY . .
 
-CMD ["./containerized-office-buddies"]
+RUN CGO_ENABLED=0 GOOS=linux go build -mod vendor
+EXPOSE 8080
+
+CMD ["./officebuddy"]
