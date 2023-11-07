@@ -1,13 +1,16 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.21
+# build stage
+FROM golang:1.21 AS build
 
 WORKDIR /app
-
-RUN git config --global url.ssh://git@github.com/.insteadOf https://github.com/
 COPY . .
-
 RUN CGO_ENABLED=0 GOOS=linux go build -mod vendor
-EXPOSE 8080
 
+# final stage
+FROM alpine:latest
+WORKDIR /root/
+COPY --from=build /app/officebuddy .
+EXPOSE 8080
 CMD ["./officebuddy"]
+
