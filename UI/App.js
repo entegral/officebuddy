@@ -8,7 +8,14 @@ import ToolBar from './ToolBar/ToolBar';
 export default function App() {
   return (
     <SafeAreaView style={styles.container}>
-      <ToolBar />
+      <ToolBar 
+        style={styles.toolBar}
+      />
+      <View
+        style={styles.mainContent}
+      >
+        <HomePage/>
+      </View>
       {/* <Text>Hello world!</Text> */}
       {/* <GetStarted 
         headerBase={styles.headerBase}
@@ -22,18 +29,27 @@ export default function App() {
         buttonBase={styles.buttonBase}
         buttonText={styles.buttonText}
       /> */}
-      <HomePage />
+
       <StatusBar style="light" />
     </SafeAreaView>
   );
 }
 
+//todo: figure out how to add fonts
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     color: '#fff',
     backgroundColor: '#272525',
   },
+  toolBar: {
+    height: 51,
+  },
+  mainContent:{
+    padding: 21,
+    flexGrow: 1,
+  },
+  // needs to be refactored?
   headerBase: {
     color: '#fff',
     fontSize: 34,

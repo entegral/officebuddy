@@ -1,27 +1,33 @@
 import {
   View,
   Text,
+  StyleSheet,
 } from "react-native";
-import ToolBar from "../ToolBar/ToolBar";
+import Calendar from "./Calendar/Calendar";
 
 export default function HomePage({
 
 }){
   return (
-    <View>
-      <View
-        style={{
-          backgroundColor: 'green'
-        }}
+    <View
+      style={styles.container}
+    >
+      <Text
+        style={styles.mainText}
       >
-        <Text
-          style={{
-            color: '#fff',
-          }}
-        >
-          Home Page
-        </Text>
-      </View>
+        SELECT YOUR AVAILABILITY
+      </Text>
+      <Calendar/>
     </View>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    paddingTop: 48,
+  },
+  mainText: {
+    color: '#fff',
+    fontWeight: 700,
+  }
+});

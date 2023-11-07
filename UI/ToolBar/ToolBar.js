@@ -25,7 +25,6 @@ export default function ToolBar({
             width: 40,
           }}
         />
-        {/* icon goes here */}
       </View>
       <View
         style={styles.MenuContainer}
