@@ -1,36 +1,38 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View } from 'react-native';
+import { SafeAreaView, StyleSheet, View } from 'react-native';
 import LogInType from './LogIn/LogInType';
 import GetStarted from './GetStarted/GetStarted';
+import HomePage from './HomePage/HomePage';
+import ToolBar from './ToolBar/ToolBar';
 
 export default function App() {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <ToolBar />
       {/* <Text>Hello world!</Text> */}
-      <GetStarted 
+      {/* <GetStarted 
         headerBase={styles.headerBase}
         buttonBase={styles.buttonBase}
         buttonText={styles.buttonText}
         textBase={styles.textBase}
         linkBase={styles.linkBase}
-      />
+      /> */}
       {/* <LogInType
         headerBase={styles.headerBase}
         buttonBase={styles.buttonBase}
         buttonText={styles.buttonText}
       /> */}
-      <StatusBar style="auto" />
-    </View>
+      <HomePage />
+      <StatusBar style="light" />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
     color: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#272525',
   },
   headerBase: {
     color: '#fff',
