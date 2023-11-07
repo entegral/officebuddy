@@ -1,48 +1,34 @@
 import {
   View,
+  StyleSheet,
 } from "react-native";
+import { Image } from 'expo-image';
 import HamburgerMenuIcon from "../Icons/HamburgerMenuIcon";
 
 export default function ToolBar({
   
 }) {
+  const src = require('../Images/OfficialLogo.png')
   return (
     <View
       className={'toolbar'}
-      style={{
-        height: 51,
-        flexDirection: 'row',
-        paddingHorizontal: 16,
-        paddingBottom: 8,
-        paddingTop: 2,
-      }}  
-      // style={{
-      //   height: 50,
-      //   width: '100%',
-      //   flexDirection: 'row',
-      //   justifyContent: 'space-between',
-      //   alignItems: 'center',
-      //   alignSelf: 'flex-start',
-      //   paddingHorizontal: 16,
-      //   paddingBottom: 8,
-      //   paddingTop: 2,
-      //   borderColor: '#fff',
-      //   borderWidth: 1,
-      // }}
+      style={styles.toolbar}  
     >
       <View
-        style={{
-          backgroundColor: 'red',
-          height: 24,
-          width:24,
-        }}
+        className={'icon'}
+        style={styles.icon}
       >
+        <Image
+          source={src}
+          style={{
+            height: 40,
+            width: 40,
+          }}
+        />
         {/* icon goes here */}
       </View>
       <View
-      style={{
-        backgroundColor: 'blue',
-      }}
+        style={styles.MenuContainer}
       >
         <HamburgerMenuIcon
           style={{
@@ -55,3 +41,23 @@ export default function ToolBar({
     </View>
   )
 };
+
+const styles = StyleSheet.create({
+  toolbar: {
+    height: 51,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    paddingTop: 3,
+  },
+  icon: {
+    height: 40,
+    width: 40,
+  },
+  MenuContainer: {
+    paddingVertical: 8,
+    marginLeft: 'auto',
+  },
+});
