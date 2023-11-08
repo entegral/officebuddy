@@ -35,7 +35,6 @@ export default function App() {
   );
 }
 
-//todo: figure out how to add fonts
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -84,3 +83,7 @@ const styles = StyleSheet.create({
     fontWeight: 700,
   }
 });
+
+//todo: 
+//figure out how to add fonts
+//add linter
