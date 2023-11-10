@@ -7,29 +7,27 @@ import ToolBar from './ToolBar/ToolBar';
 
 export default function App() {
   return (
+    
     <SafeAreaView style={styles.container}>
-      <ToolBar 
-        style={styles.toolBar}
-      />
-      <View
-        style={styles.mainContent}
-      >
+      <View style={styles.toolbar}>
+        <ToolBar />
+      </View>
+      <View style={styles.mainContent}>
         <HomePage/>
       </View>
-      {/* <Text>Hello world!</Text> */}
-      {/* <GetStarted 
-        headerBase={styles.headerBase}
-        buttonBase={styles.buttonBase}
-        buttonText={styles.buttonText}
-        textBase={styles.textBase}
-        linkBase={styles.linkBase}
-      /> */}
-      {/* <LogInType
-        headerBase={styles.headerBase}
-        buttonBase={styles.buttonBase}
-        buttonText={styles.buttonText}
-      /> */}
-
+    {/* <GetStarted 
+    //     headerBase={styles.headerBase}
+    //     buttonBase={styles.buttonBase}
+    //     buttonText={styles.buttonText}
+    //     textBase={styles.textBase}
+    //     linkBase={styles.linkBase}
+    //   /> 
+    //   {/* <LogInType
+    //     headerBase={styles.headerBase}
+    //     buttonBase={styles.buttonBase}
+    //     buttonText={styles.buttonText}
+    //   /> 
+   */}
       <StatusBar style="light" />
     </SafeAreaView>
   );
@@ -38,15 +36,15 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    color: '#fff',
+    flexDirection: 'column',
     backgroundColor: '#272525',
   },
-  toolBar: {
+  toolbar: {
     height: 51,
   },
   mainContent:{
-    padding: 21,
-    flexGrow: 1,
+    paddingHorizontal: 21,
+    flex: 1,
   },
   // needs to be refactored?
   headerBase: {
