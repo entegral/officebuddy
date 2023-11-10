@@ -85,3 +85,8 @@ const styles = StyleSheet.create({
 //todo: 
 //figure out how to add fonts
 //add linter
+
+//notes:
+//need to know office that user is in
+//need to know week number
+//give start date and end date rfc.3339 format

@@ -18,10 +18,10 @@ export default function HomePage({
       slug: 'Monday',
       active: true,
       coworkers: [
-        'Kevin Lasher',
-        'Elisa Cuan',
-        'Robert Bruce',
-        'Marquita Nowell'
+        // {name: 'Kevin Lasher', id: 1},
+        // {name: 'Elisa Cuan', id: 2},
+        // {name: 'Robert Bruce', id: 3},
+        // {name: 'Marquita Nowell', id: 4}
       ],
     },
     {
