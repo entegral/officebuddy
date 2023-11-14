@@ -5,3 +5,6 @@ build:
 
 start:
 	docker run -p 8080:8080 obuddies
+
+generate:
+	go run github.com/99designs/gqlgen generate

@@ -1,0 +1,28 @@
+type User {
+  guid: String!
+  firstName: String!
+  lastName: String!
+  email: String!
+  adminOf: [Office!]
+}
+
+input UserSaver {
+  guid: String!
+  firstName: String!
+  lastName: String!
+  email: String!
+}
+
+input UserFinder {
+  guid: String
+  email: String
+}
+
+type Query {
+  users(input: [UserFinder!]!): [User!]
+  admins(groupGUID: String!): [User!]
+}
+
+type Mutation {
+  Users(input: [UserSaver!]): User
+}

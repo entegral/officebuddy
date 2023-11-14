@@ -1,0 +1,21 @@
+type Schedule {
+  dayNumber: Int!
+  day: DayOfWeek
+  active: Boolean!
+  coworkers: [User!]
+  offices: [Office!]
+}
+
+enum DayOfWeek {
+  Mon
+  Tue
+  Wed
+  Thu
+  Fri
+  Sat
+  Sun
+}
+
+extend type Query {
+  getOfficeSchedule(officeGUID: String!): [Schedule!]
+}

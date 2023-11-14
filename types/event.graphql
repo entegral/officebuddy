@@ -1,0 +1,7 @@
+type Event {
+  guid: String!
+  title: String!
+  schedule: Schedule!
+  description: String!
+  offices: [Office!]
+}
