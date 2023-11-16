@@ -2,7 +2,6 @@
 
 package model
 
-type UserFinder struct {
-	GUID  *string `json:"guid,omitempty"`
-	Email *string `json:"email,omitempty"`
+type Dummy struct {
+	Name *string `json:"name,omitempty"`
 }

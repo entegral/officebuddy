@@ -2,12 +2,15 @@ package types
 
 import (
 	"context"
+	"errors"
 
 	"github.com/dgryski/trifles/uuid"
 	"github.com/entegral/toolbox/clients"
+	"github.com/entegral/toolbox/types"
 )
 
 type User struct {
+	types.Row
 	GUID      string `json:"guid"`
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
@@ -15,30 +18,47 @@ type User struct {
 	// AdminOf   []*Office `json:"adminOf,omitempty"`
 }
 
-// These satisfy the Keyable interface which is used in both Put and Update calls of dynamo
-
-// Pk is used to satisfy the Keyable interface
-func (u *User) Pk(ctx context.Context, clients clients.Client) (string, error) {
-	return "EML/" + u.Email, nil
-}
-
-// Sk is used to satisfy the Keyable interface
-func (u *User) Sk(ctx context.Context, clients clients.Client) (string, error) {
-	return "data/profileinfo", nil
-}
-
-// These satisfy the Hookable interface
-
-// Before satisfies the Hookable interface
-func (u *User) Before(ctx context.Context, clients clients.Client) error {
-	if u.GUID == "" {
-		u.GUID = uuid.UUIDv4()
+// Keys returns the partition key and sort key for the given GSI.
+func (u *User) Keys(gsi int) (partitionKey, sortKey string) {
+	u.Pk1 = u.GUID
+	u.Sk1 = "userinfo"
+	switch gsi {
+	case 0:
+		return u.Email, "userinfo"
+	case 1:
+		return u.GUID, "userinfo"
+	default:
+		return "", ""
 	}
-	return nil
 }
 
-// After satisfies the Hookable interface
-func (u *User) After(ctx context.Context, clients clients.Client) error { return nil }
+// ErrInvalidEmail is returned when an email is invalid.
+var ErrInvalidEmail = errors.New("invalid email")
+
+// ErrInvalidFirstName is returned when a first name is invalid.
+var ErrInvalidFirstName = errors.New("invalid first name")
+
+// ErrInvalidLastName is returned when a last name is invalid.
+var ErrInvalidLastName = errors.New("invalid last name")
+
+// NewUser creates a new user.
+func NewUser(ctx context.Context, email, fname, lname string) (*User, error) {
+	if email == "" {
+		return nil, ErrInvalidEmail
+	}
+	if fname == "" {
+		return nil, ErrInvalidFirstName
+	}
+	if lname == "" {
+		return nil, ErrInvalidLastName
+	}
+	return &User{
+		Email:     email,
+		FirstName: fname,
+		LastName:  lname,
+		GUID:      uuid.UUIDv4(),
+	}, nil
+}
 
 func (u *User) AdminOf(ctx context.Context, clients clients.Client) ([]*Office, error) {
 	return nil, nil

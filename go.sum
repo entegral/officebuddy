@@ -62,6 +62,12 @@ github.com/dgryski/trifles v0.0.0-20230903005119-f50d829f2e54 h1:SG7nF6SRlWhcT7c
 github.com/dgryski/trifles v0.0.0-20230903005119-f50d829f2e54/go.mod h1:if7Fbed8SFyPtHLHbg49SI7NAdJiC5WIA09pe59rfAA=
 github.com/entegral/toolbox v0.0.2-0.20230828170639-bc277b6d2525 h1:NG6Ck9/VdjKKw2KOziPJMaBm/BvVV96BEbIXJ5J7Q9k=
 github.com/entegral/toolbox v0.0.2-0.20230828170639-bc277b6d2525/go.mod h1:XxviLnkPOSSe0FM0QVnRNB4M0GkWz/CzfAaW+X9mvtI=
+github.com/entegral/toolbox v0.0.2-0.20231116080851-997e8692a0a4 h1:nBk9xL2c5nzYqFmGl70QRtvLyqhpY7pzXMgJY5esy+Q=
+github.com/entegral/toolbox v0.0.2-0.20231116080851-997e8692a0a4/go.mod h1:XxviLnkPOSSe0FM0QVnRNB4M0GkWz/CzfAaW+X9mvtI=
+github.com/entegral/toolbox v0.0.2-0.20231116084245-e19ffa6c5c70 h1:QWdGdOySJHmwxzFsvv/i/6r5VjYVU2MHZyUiHywx31Y=
+github.com/entegral/toolbox v0.0.2-0.20231116084245-e19ffa6c5c70/go.mod h1:XxviLnkPOSSe0FM0QVnRNB4M0GkWz/CzfAaW+X9mvtI=
+github.com/entegral/toolbox v0.0.2-0.20231116085952-66590ea04c99 h1:7j+6Tn/JLAjq37D0ArGFKiYXZuoMgJ10GDLabKF2YCI=
+github.com/entegral/toolbox v0.0.2-0.20231116085952-66590ea04c99/go.mod h1:XxviLnkPOSSe0FM0QVnRNB4M0GkWz/CzfAaW+X9mvtI=
 github.com/google/go-cmp v0.5.8 h1:e6P7q2lk1O+qJJb4BtCQXlK8vWEO8V1ZeuEdJNOqZyg=
 github.com/google/go-cmp v0.5.8/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=

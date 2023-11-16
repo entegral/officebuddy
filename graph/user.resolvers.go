@@ -8,18 +8,33 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/entegral/officebuddy/graph/model"
 	"github.com/entegral/officebuddy/types"
+	"github.com/entegral/toolbox/helpers"
 )
 
 // Users is the resolver for the Users field.
 func (r *mutationResolver) Users(ctx context.Context, input []*types.UserSaver) (*types.User, error) {
-	panic(fmt.Errorf("not implemented: Users - Users"))
+	for _, u := range input {
+		_, err := helpers.PutItem(ctx, u)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return nil, nil
 }
 
 // Users is the resolver for the users field.
-func (r *queryResolver) Users(ctx context.Context, input []*model.UserFinder) ([]*types.User, error) {
-	panic(fmt.Errorf("not implemented: Users - users"))
+func (r *queryResolver) Users(ctx context.Context, input []*types.UserFinder) ([]*types.User, error) {
+	ret := []*types.User{}
+	for _, u := range input {
+		user := u.User
+		if found, err := u.LoadByEmail(ctx); found && err == nil {
+			ret = append(ret, &user)
+		} else if err != nil {
+			return nil, err
+		}
+	}
+	return ret, nil
 }
 
 // Admins is the resolver for the admins field.

@@ -49,6 +49,10 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Dummy struct {
+		Name func(childComplexity int) int
+	}
+
 	Event struct {
 		Description func(childComplexity int) int
 		GUID        func(childComplexity int) int
@@ -75,7 +79,7 @@ type ComplexityRoot struct {
 		GetOfficeSchedule func(childComplexity int, officeGUID string) int
 		Office            func(childComplexity int, officeGUID string) int
 		Offices           func(childComplexity int, userGUID string) int
-		Users             func(childComplexity int, input []*model.UserFinder) int
+		Users             func(childComplexity int, input []*types.UserFinder) int
 	}
 
 	Schedule struct {
@@ -99,7 +103,7 @@ type MutationResolver interface {
 	Users(ctx context.Context, input []*types.UserSaver) (*types.User, error)
 }
 type QueryResolver interface {
-	Users(ctx context.Context, input []*model.UserFinder) ([]*types.User, error)
+	Users(ctx context.Context, input []*types.UserFinder) ([]*types.User, error)
 	Admins(ctx context.Context, groupGUID string) ([]*types.User, error)
 	Office(ctx context.Context, officeGUID string) (*types.Office, error)
 	Offices(ctx context.Context, userGUID string) ([]*types.Office, error)
@@ -130,6 +134,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Dummy.name":
+		if e.complexity.Dummy.Name == nil {
+			break
+		}
+
+		return e.complexity.Dummy.Name(childComplexity), true
 
 	case "Event.description":
 		if e.complexity.Event.Description == nil {
@@ -278,7 +289,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Users(childComplexity, args["input"].([]*model.UserFinder)), true
+		return e.complexity.Query.Users(childComplexity, args["input"].([]*types.UserFinder)), true
 
 	case "Schedule.active":
 		if e.complexity.Schedule.Active == nil {
@@ -457,6 +468,9 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
+	{Name: "../types/dummy.graphql", Input: `type Dummy {
+  name: String
+}`, BuiltIn: false},
 	{Name: "../types/event.graphql", Input: `type Event {
   guid: String!
   title: String!
@@ -627,10 +641,10 @@ func (ec *executionContext) field_Query_offices_args(ctx context.Context, rawArg
 func (ec *executionContext) field_Query_users_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 []*model.UserFinder
+	var arg0 []*types.UserFinder
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUserFinder2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋgraphᚋmodelᚐUserFinderᚄ(ctx, tmp)
+		arg0, err = ec.unmarshalNUserFinder2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUserFinderᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -676,6 +690,47 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _Dummy_name(ctx context.Context, field graphql.CollectedField, obj *model.Dummy) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Dummy_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Dummy_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Dummy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Event_guid(ctx context.Context, field graphql.CollectedField, obj *types.Event) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Event_guid(ctx, field)
@@ -1286,7 +1341,7 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Users(rctx, fc.Args["input"].([]*model.UserFinder))
+		return ec.resolvers.Query().Users(rctx, fc.Args["input"].([]*types.UserFinder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1792,9 +1847,9 @@ func (ec *executionContext) _Schedule_day(ctx context.Context, field graphql.Col
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*types.DayOfWeek)
+	res := resTmp.(types.DayOfWeek)
 	fc.Result = res
-	return ec.marshalODayOfWeek2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐDayOfWeek(ctx, field.Selections, res)
+	return ec.marshalODayOfWeek2githubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐDayOfWeek(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Schedule_day(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3966,8 +4021,8 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputUserFinder(ctx context.Context, obj interface{}) (model.UserFinder, error) {
-	var it model.UserFinder
+func (ec *executionContext) unmarshalInputUserFinder(ctx context.Context, obj interface{}) (types.UserFinder, error) {
+	var it types.UserFinder
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -3984,7 +4039,7 @@ func (ec *executionContext) unmarshalInputUserFinder(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("guid"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3993,7 +4048,7 @@ func (ec *executionContext) unmarshalInputUserFinder(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4067,6 +4122,42 @@ func (ec *executionContext) unmarshalInputUserSaver(ctx context.Context, obj int
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var dummyImplementors = []string{"Dummy"}
+
+func (ec *executionContext) _Dummy(ctx context.Context, sel ast.SelectionSet, obj *model.Dummy) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dummyImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Dummy")
+		case "name":
+			out.Values[i] = ec._Dummy_name(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
 
 var eventImplementors = []string{"Event"}
 
@@ -4946,16 +5037,16 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋentegralᚋofficebudd
 	return ec._User(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNUserFinder2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋgraphᚋmodelᚐUserFinderᚄ(ctx context.Context, v interface{}) ([]*model.UserFinder, error) {
+func (ec *executionContext) unmarshalNUserFinder2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUserFinderᚄ(ctx context.Context, v interface{}) ([]*types.UserFinder, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
 	}
 	var err error
-	res := make([]*model.UserFinder, len(vSlice))
+	res := make([]*types.UserFinder, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNUserFinder2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋgraphᚋmodelᚐUserFinder(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNUserFinder2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUserFinder(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -4963,7 +5054,7 @@ func (ec *executionContext) unmarshalNUserFinder2ᚕᚖgithubᚗcomᚋentegral�
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNUserFinder2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋgraphᚋmodelᚐUserFinder(ctx context.Context, v interface{}) (*model.UserFinder, error) {
+func (ec *executionContext) unmarshalNUserFinder2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUserFinder(ctx context.Context, v interface{}) (*types.UserFinder, error) {
 	res, err := ec.unmarshalInputUserFinder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
@@ -5252,20 +5343,14 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) unmarshalODayOfWeek2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐDayOfWeek(ctx context.Context, v interface{}) (*types.DayOfWeek, error) {
-	if v == nil {
-		return nil, nil
-	}
+func (ec *executionContext) unmarshalODayOfWeek2githubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐDayOfWeek(ctx context.Context, v interface{}) (types.DayOfWeek, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := types.DayOfWeek(tmp)
-	return &res, graphql.ErrorOnPath(ctx, err)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalODayOfWeek2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐDayOfWeek(ctx context.Context, sel ast.SelectionSet, v *types.DayOfWeek) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalString(string(*v))
+func (ec *executionContext) marshalODayOfWeek2githubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐDayOfWeek(ctx context.Context, sel ast.SelectionSet, v types.DayOfWeek) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
 	return res
 }
 
@@ -5415,6 +5500,16 @@ func (ec *executionContext) marshalOSchedule2ᚕᚖgithubᚗcomᚋentegralᚋoff
 	}
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOString2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	return res
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
