@@ -44,7 +44,7 @@ var ErrInvalidFirstName = errors.New("invalid first name")
 var ErrInvalidLastName = errors.New("invalid last name")
 
 // NewUser creates a new user.
-func NewUser(ctx context.Context, email, fname, lname string) (*User, error) {
+func NewUser(ctx context.Context, guid, email, fname, lname string) (*User, error) {
 	if email == "" {
 		return nil, ErrInvalidEmail
 	}
@@ -54,11 +54,14 @@ func NewUser(ctx context.Context, email, fname, lname string) (*User, error) {
 	if lname == "" {
 		return nil, ErrInvalidLastName
 	}
+	if guid == "" {
+		guid = uuid.UUIDv4()
+	}
 	return &User{
 		Email:     email,
 		FirstName: fname,
 		LastName:  lname,
-		GUID:      uuid.UUIDv4(),
+		GUID:      guid,
 	}, nil
 }
 

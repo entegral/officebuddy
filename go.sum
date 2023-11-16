@@ -62,6 +62,8 @@ github.com/dgryski/trifles v0.0.0-20230903005119-f50d829f2e54 h1:SG7nF6SRlWhcT7c
 github.com/dgryski/trifles v0.0.0-20230903005119-f50d829f2e54/go.mod h1:if7Fbed8SFyPtHLHbg49SI7NAdJiC5WIA09pe59rfAA=
 github.com/entegral/toolbox v0.0.2-0.20231116220105-a1b95d718761 h1:OpZdF88SaMuEnutk9L1ejAtOUsxMIwP3AySzN2zUmKs=
 github.com/entegral/toolbox v0.0.2-0.20231116220105-a1b95d718761/go.mod h1:XxviLnkPOSSe0FM0QVnRNB4M0GkWz/CzfAaW+X9mvtI=
+github.com/entegral/toolbox v0.0.2-0.20231116230455-eb1f9f0f6be9 h1:ptQIVLYp3XKU4uIFikcFAg0wS9o8Pjf1RFXDtxu5SCs=
+github.com/entegral/toolbox v0.0.2-0.20231116230455-eb1f9f0f6be9/go.mod h1:XxviLnkPOSSe0FM0QVnRNB4M0GkWz/CzfAaW+X9mvtI=
 github.com/google/go-cmp v0.5.8 h1:e6P7q2lk1O+qJJb4BtCQXlK8vWEO8V1ZeuEdJNOqZyg=
 github.com/google/go-cmp v0.5.8/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=

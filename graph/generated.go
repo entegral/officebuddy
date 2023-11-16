@@ -81,7 +81,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Admins             func(childComplexity int, groupGUID string) int
-		GetOfficeSchedules func(childComplexity int, officeGUID string) int
+		GetOfficeSchedules func(childComplexity int, input types.ScheduleFinder) int
 		GetSchedule        func(childComplexity int, scheduleGUID string, officeGUID string) int
 		Office             func(childComplexity int, officeGUID string) int
 		Offices            func(childComplexity int, userGUID string) int
@@ -121,7 +121,7 @@ type QueryResolver interface {
 	Office(ctx context.Context, officeGUID string) (*types.Office, error)
 	Offices(ctx context.Context, userGUID string) ([]*types.Office, error)
 	GetSchedule(ctx context.Context, scheduleGUID string, officeGUID string) (*types.Schedule, error)
-	GetOfficeSchedules(ctx context.Context, officeGUID string) ([]*types.Schedule, error)
+	GetOfficeSchedules(ctx context.Context, input types.ScheduleFinder) ([]*types.Schedule, error)
 }
 type ScheduleResolver interface {
 	Start(ctx context.Context, obj *types.Schedule) (string, error)
@@ -311,7 +311,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetOfficeSchedules(childComplexity, args["officeGUID"].(string)), true
+		return e.complexity.Query.GetOfficeSchedules(childComplexity, args["input"].(types.ScheduleFinder)), true
 
 	case "Query.getSchedule":
 		if e.complexity.Query.GetSchedule == nil {
@@ -453,6 +453,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputScheduleFinder,
 		ec.unmarshalInputScheduleSaver,
 		ec.unmarshalInputUserFinder,
 		ec.unmarshalInputUserSaver,
@@ -600,9 +601,15 @@ input ScheduleSaver {
   active: Boolean!
 }
 
+input ScheduleFinder {
+  scheduleGUID: String
+  officeGUID: String
+
+}
+
 extend type Query {
   getSchedule(scheduleGUID: String!, officeGUID: String!): Schedule
-  getOfficeSchedules(officeGUID: String!): [Schedule!]
+  getOfficeSchedules(input: ScheduleFinder!): [Schedule!]
 }
 
 extend type Mutation {
@@ -618,7 +625,7 @@ extend type Mutation {
 }
 
 input UserSaver {
-  guid: String!
+  guid: String
   firstName: String!
   lastName: String!
   email: String!
@@ -746,15 +753,15 @@ func (ec *executionContext) field_Query_admins_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_getOfficeSchedules_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["officeGUID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("officeGUID"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+	var arg0 types.ScheduleFinder
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNScheduleFinder2githubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐScheduleFinder(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["officeGUID"] = arg0
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -2047,7 +2054,7 @@ func (ec *executionContext) _Query_getOfficeSchedules(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetOfficeSchedules(rctx, fc.Args["officeGUID"].(string))
+		return ec.resolvers.Query().GetOfficeSchedules(rctx, fc.Args["input"].(types.ScheduleFinder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4566,6 +4573,44 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputScheduleFinder(ctx context.Context, obj interface{}) (types.ScheduleFinder, error) {
+	var it types.ScheduleFinder
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"scheduleGUID", "officeGUID"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "scheduleGUID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scheduleGUID"))
+			data, err := ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ScheduleGUID = data
+		case "officeGUID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("officeGUID"))
+			data, err := ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OfficeGUID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputScheduleSaver(ctx context.Context, obj interface{}) (types.ScheduleSaver, error) {
 	var it types.ScheduleSaver
 	asMap := map[string]interface{}{}
@@ -4691,7 +4736,7 @@ func (ec *executionContext) unmarshalInputUserSaver(ctx context.Context, obj int
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("guid"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5754,6 +5799,11 @@ func (ec *executionContext) marshalNSchedule2ᚖgithubᚗcomᚋentegralᚋoffice
 		return graphql.Null
 	}
 	return ec._Schedule(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNScheduleFinder2githubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐScheduleFinder(ctx context.Context, v interface{}) (types.ScheduleFinder, error) {
+	res, err := ec.unmarshalInputScheduleFinder(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNScheduleSaver2githubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐScheduleSaver(ctx context.Context, v interface{}) (types.ScheduleSaver, error) {

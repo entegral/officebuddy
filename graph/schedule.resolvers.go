@@ -41,8 +41,8 @@ func (r *queryResolver) GetSchedule(ctx context.Context, scheduleGUID string, of
 }
 
 // GetOfficeSchedules is the resolver for the getOfficeSchedules field.
-func (r *queryResolver) GetOfficeSchedules(ctx context.Context, officeGUID string) ([]*types.Schedule, error) {
-	s := &types.Schedule{OfficeGUID: officeGUID}
+func (r *queryResolver) GetOfficeSchedules(ctx context.Context, input types.ScheduleFinder) ([]*types.Schedule, error) {
+	s := input.Schedule
 	schedules, err := s.LoadSchedulesForOffice(ctx)
 	if err != nil {
 		return nil, err

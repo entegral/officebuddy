@@ -7,7 +7,7 @@ type User {
 }
 
 input UserSaver {
-  guid: String!
+  guid: String
   firstName: String!
   lastName: String!
   email: String!

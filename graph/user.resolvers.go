@@ -14,8 +14,18 @@ import (
 
 // Users is the resolver for the Users field.
 func (r *mutationResolver) Users(ctx context.Context, input []*types.UserSaver) (*types.User, error) {
-	for _, u := range input {
-		_, err := helpers.PutItem(ctx, u)
+	fmt.Println("--------------------1-------------------")
+	return nil, nil
+	for i, u := range input {
+		fmt.Printf("--------------------%d-2-------------------", i)
+		newUser, err := types.NewUser(ctx, u.GUID, u.Email, u.FirstName, u.LastName)
+		fmt.Printf("--------------------%d-3-------------------", i)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Printf("--------------------%d-4------------------", i)
+		return newUser, nil
+		_, err = helpers.PutItem(ctx, newUser)
 		if err != nil {
 			return nil, err
 		}
