@@ -10,6 +10,28 @@ type Schedule {
   offices: [Office!]
 }
 
+input ScheduleSaver {
+  scheduleGUID: String!
+  officeGUID: String!
+  # dates should be RFC3339 formatted
+  start: String!
+  # dates should be RFC3339 formatted
+  end: String!
+  active: Boolean!
+}
+
+input ScheduleFinder {
+  scheduleGUID: String
+  officeGUID: String
+
+}
+
 extend type Query {
-  getOfficeSchedules(officeGUID: String!): [Schedule!]
+  getSchedule(scheduleGUID: String!, officeGUID: String!): Schedule
+  getOfficeSchedules(input: ScheduleFinder!): [Schedule!]
+}
+
+extend type Mutation {
+  createSchedule(schedule: ScheduleSaver!): Schedule!
+  deleteSchedule(scheduleGUID: String!, officeGUID: String!): Boolean!
 }

@@ -1,8 +1,13 @@
 package types
 
 import (
+	"context"
+	"fmt"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	awstypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/entegral/toolbox/helpers"
 	"github.com/entegral/toolbox/types"
 )
 
@@ -15,6 +20,100 @@ type Schedule struct {
 	End          time.Time `json:"end"`
 	Active       bool      `json:"active"`
 	Coworkers    []*User   `json:"coworkers,omitempty"`
+}
+
+type ScheduleSaver struct {
+	Schedule
+}
+
+type ScheduleFinder struct {
+	Schedule
+}
+
+func (s *Schedule) LoadSchedule(ctx context.Context) (loaded bool, err error) {
+	if s.ScheduleGUID == "" && s.OfficeGUID == "" {
+		return false, nil
+	}
+	if s.ScheduleGUID != "" && s.OfficeGUID != "" {
+		return helpers.GetItem(ctx, s)
+	}
+	if s.OfficeGUID != "" {
+		schedules, err := s.LoadSchedulesForOffice(ctx)
+		if err != nil {
+			return false, err
+		}
+		if len(schedules) != 0 {
+			*s = schedules[0]
+			return true, nil
+		}
+	}
+	if s.ScheduleGUID != "" {
+		schedules, err := s.LoadScheduleAssignments(ctx)
+		if err != nil {
+			return false, err
+		}
+		if len(schedules) != 0 {
+			*s = schedules[0]
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// LoadScheduleAssignments loads all office assignments for a given schedule
+func (s *Schedule) LoadScheduleAssignments(ctx context.Context) ([]Schedule, error) {
+	if s.ScheduleGUID == "" {
+		return nil, fmt.Errorf("office GUID is required to load schedules for office")
+	}
+	pk, _ := s.Keys(0)
+	tablename := s.TableName(ctx)
+	exp := "pk = :pk"
+	i := dynamodb.QueryInput{
+		TableName:              &tablename,
+		KeyConditionExpression: &exp,
+		ExpressionAttributeValues: map[string]awstypes.AttributeValue{
+			":pk1": &awstypes.AttributeValueMemberS{
+				Value: pk,
+			},
+		},
+	}
+	schedules, err := helpers.Query[Schedule](ctx, i)
+	if err != nil {
+		return nil, err
+	}
+	if len(schedules) == 0 {
+		return nil, nil
+	}
+	return schedules, nil
+}
+
+// LoadSchedulesForOffice loads all schedules for a given office
+func (s *Schedule) LoadSchedulesForOffice(ctx context.Context) ([]Schedule, error) {
+	if s.OfficeGUID == "" {
+		return nil, fmt.Errorf("office GUID is required to load schedules for office")
+	}
+	tablename := s.TableName(ctx)
+	gsi := types.GSI1.String()
+	exp := "pk1 = :pk1"
+	pk1, _ := s.Keys(1)
+	i := dynamodb.QueryInput{
+		TableName:              &tablename,
+		IndexName:              &gsi,
+		KeyConditionExpression: &exp,
+		ExpressionAttributeValues: map[string]awstypes.AttributeValue{
+			":pk1": &awstypes.AttributeValueMemberS{
+				Value: pk1,
+			},
+		},
+	}
+	schedules, err := helpers.Query[Schedule](ctx, i)
+	if err != nil {
+		return nil, err
+	}
+	if len(schedules) == 0 {
+		return nil, nil
+	}
+	return schedules, nil
 }
 
 // Keys returns the partition key and sort key for the row
