@@ -1,21 +1,15 @@
 type Schedule {
-  dayNumber: Int!
-  day: DayOfWeek
+  scheduleGUID: String!
+  officeGUID: String!
+  # dates should be RFC3339 formatted
+  start: String!
+  # dates should be RFC3339 formatted
+  end: String!
   active: Boolean!
   coworkers: [User!]
   offices: [Office!]
 }
 
-enum DayOfWeek {
-  Mon
-  Tue
-  Wed
-  Thu
-  Fri
-  Sat
-  Sun
-}
-
 extend type Query {
-  getOfficeSchedule(officeGUID: String!): [Schedule!]
+  getOfficeSchedules(officeGUID: String!): [Schedule!]
 }

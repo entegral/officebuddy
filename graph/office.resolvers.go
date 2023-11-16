@@ -11,6 +11,11 @@ import (
 	"github.com/entegral/officebuddy/types"
 )
 
+// Schedules is the resolver for the schedules field.
+func (r *officeResolver) Schedules(ctx context.Context, obj *types.Office, scheduleGUID *string) ([]*types.Schedule, error) {
+	panic(fmt.Errorf("not implemented: Schedules - schedules"))
+}
+
 // Office is the resolver for the office field.
 func (r *queryResolver) Office(ctx context.Context, officeGUID string) (*types.Office, error) {
 	panic(fmt.Errorf("not implemented: Office - office"))
@@ -20,3 +25,8 @@ func (r *queryResolver) Office(ctx context.Context, officeGUID string) (*types.O
 func (r *queryResolver) Offices(ctx context.Context, userGUID string) ([]*types.Office, error) {
 	panic(fmt.Errorf("not implemented: Offices - offices"))
 }
+
+// Office returns OfficeResolver implementation.
+func (r *Resolver) Office() OfficeResolver { return &officeResolver{r} }
+
+type officeResolver struct{ *Resolver }

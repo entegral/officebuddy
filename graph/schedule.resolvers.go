@@ -11,29 +11,19 @@ import (
 	"github.com/entegral/officebuddy/types"
 )
 
-// GetOfficeSchedule is the resolver for the getOfficeSchedule field.
-func (r *queryResolver) GetOfficeSchedule(ctx context.Context, officeGUID string) ([]*types.Schedule, error) {
-	return []*types.Schedule{
-		{
-			DayNumber: 1,
-			Day:       types.DayOfWeekFri,
-			Active:    true,
-			Coworkers: []*types.User{
-				{
-					GUID:      "1234",
-					FirstName: "John",
-					LastName:  "Doe",
-					Email:     "123@gmail.com",
-				},
-				{
-					GUID:      "5678",
-					FirstName: "Jane",
-					LastName:  "Doe",
-					Email:     "234@gmail.com",
-				},
-			},
-		},
-	}, nil
+// GetOfficeSchedules is the resolver for the getOfficeSchedules field.
+func (r *queryResolver) GetOfficeSchedules(ctx context.Context, officeGUID string) ([]*types.Schedule, error) {
+	panic(fmt.Errorf("not implemented: GetOfficeSchedules - getOfficeSchedules"))
+}
+
+// Start is the resolver for the start field.
+func (r *scheduleResolver) Start(ctx context.Context, obj *types.Schedule) (string, error) {
+	panic(fmt.Errorf("not implemented: Start - start"))
+}
+
+// End is the resolver for the end field.
+func (r *scheduleResolver) End(ctx context.Context, obj *types.Schedule) (string, error) {
+	panic(fmt.Errorf("not implemented: End - end"))
 }
 
 // Offices is the resolver for the offices field.

@@ -20,13 +20,15 @@ type User struct {
 
 // Keys returns the partition key and sort key for the given GSI.
 func (u *User) Keys(gsi int) (partitionKey, sortKey string) {
-	u.Pk1 = u.GUID
-	u.Sk1 = "userinfo"
+	u.Pk = u.Email
+	u.Sk = "userinfo"
+	u.Pk1 = "user:" + u.GUID
+	u.Sk1 = u.Sk
 	switch gsi {
 	case 0:
-		return u.Email, "userinfo"
+		return u.Pk, u.Sk
 	case 1:
-		return u.GUID, "userinfo"
+		return u.Pk1, u.Sk1
 	default:
 		return "", ""
 	}

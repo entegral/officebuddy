@@ -6,6 +6,7 @@ type Office {
   admins: [User!]
   members: [User!]
   events: [Event!]
+  schedules(scheduleGUID: String): [Schedule!]
 }
 
 extend type Query {
