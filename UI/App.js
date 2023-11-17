@@ -6,6 +6,12 @@ import HomePage from './HomePage/HomePage';
 import ToolBar from './ToolBar/ToolBar';
 
 export default function App() {
+
+  const user = {
+    name: 'Kevin Lasher',
+    office: 'New York',
+    id: 1,
+  }
   return (
     
     <SafeAreaView style={styles.container}>
@@ -13,7 +19,9 @@ export default function App() {
         <ToolBar />
       </View>
       <View style={styles.mainContent}>
-        <HomePage/>
+        <HomePage
+          user={user}
+        />
       </View>
     {/* <GetStarted 
     //     headerBase={styles.headerBase}

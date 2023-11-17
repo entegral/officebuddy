@@ -1,8 +1,21 @@
 import { View, Text, StyleSheet } from 'react-native';
 import CalendarDay from './CalendarDay';
 
-export default function Calendar({days}) {
+export default function Calendar({
+  days,
+  activeDays,
+  activeDayHandler,
+}) {
  
+ 
+  const calculateCoWorkers = (day) => {
+    let len = day.coworkers.length;
+    if (activeDays[day.number]) {
+      len++;
+    }
+    return len;
+  }
+
   return (
     <View
       style={styles.container}
@@ -14,7 +27,8 @@ export default function Calendar({days}) {
               key={index}
               number={day.number}
               day={day.day}
-              active={day.active}
+              active={activeDays[day.number]}
+              activeDayHandler={activeDayHandler}
               coworkers={day.coworkers.length}
             />
           )

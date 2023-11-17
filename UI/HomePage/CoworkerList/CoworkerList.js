@@ -28,7 +28,7 @@ export default function CoworkerList({
                 {day.coworkers.map((coworker, i) => {
                   return (
                     <View
-                      key={`${i}-${coworker}`}
+                      key={coworker.id}
                     >
                       <Text
                         style={styles.coworkerText}
@@ -37,7 +37,7 @@ export default function CoworkerList({
                         height={12}
                         width={12}  
                         />
-                        &nbsp;&nbsp;{coworker}
+                        &nbsp;&nbsp;{coworker.name}
                       </Text>
                     </View>
                   )

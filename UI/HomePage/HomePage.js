@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,92 +9,120 @@ import Calendar from "./Calendar/Calendar";
 import CoworkerList from "./CoworkerList/CoworkerList";
 
 export default function HomePage({
-
+  user,
 }){
-
-  const days =[
+  const [days, setDays] = useState([
     {
       number: 20,
       day: 'Mon',
       slug: 'Monday',
-      active: true,
       coworkers: [
-        // {name: 'Kevin Lasher', id: 1},
-        // {name: 'Elisa Cuan', id: 2},
-        // {name: 'Robert Bruce', id: 3},
-        // {name: 'Marquita Nowell', id: 4}
+        {name: 'Elisa Cuan', id: 2},
+        {name: 'Robert Bruce', id: 3},
+        {name: 'Marquita Nowell', id: 4},
       ],
     },
     {
       number: 21,
       day: 'Tue',
       slug: 'Tuesday',
-      active: true,
       coworkers: [
-        'Kevin Lasher',
-        'Robert Bruce',
-        'Marquita Nowell'
+        {name: 'Robert Bruce', id: 3},
+        {name: 'Marquita Nowell', id: 4},
       ],
     },
     {
       number: 22,
       day: 'Wed',
       slug: 'Free Lunch Wednesday',
-      active: false,
       coworkers: [
-        'Marquita Nowell'
+        {name: 'Marquita Nowell', id: 4},
       ],
     },
     {
       number: 23,
       day: 'Thu',
       slug: 'Thursday',
-      active: false,
       coworkers: [
-        'Kevin Lasher',
-        'Marquita Nowell'
+        {name: 'Marquita Nowell', id: 4},
       ],
     },
     {
       number: 24,
       day: 'Fri',
       slug: 'Flex Day Friday',
-      active: false,
       coworkers: [
-        'Kevin Lasher',
-        'Robert Bruce',
-        'Marquita Nowell'
+        {name: 'Robert Bruce', id: 3},
+        {name: 'Marquita Nowell', id: 4},
       ],
     },
     {
       number: 25,
       day: 'Sat',
       slug: 'Saturday',
-      active: false,
       coworkers: [
-        'Kevin Lasher',
-        'Robert Bruce',
-        'Marquita Nowell'
+        {name: 'Elisa Cuan', id: 2},
+        {name: 'Robert Bruce', id: 3},
+        {name: 'Marquita Nowell', id: 4},
       ],
     },
     {
       number: 26,
       day: 'Sun',
       slug: 'Sunday',
-      active: false,
       coworkers: [
-        'Kevin Lasher',
-        'Robert Bruce',
-        'Marquita Nowell'
+        {name: 'Elisa Cuan', id: 2},
+        {name: 'Robert Bruce', id: 3},
+        {name: 'Marquita Nowell', id: 4},
       ],
     },
-  ]
+  ]);
+  const [activeDays, setActiveDays] = useState({
+    20: true,
+    21: true,
+    22: false,
+    23: false,
+    24: false,
+    25: false,
+    26: false,
+  })
+
+  useEffect(() => {
+    const nUser = { ...user, name: `${user.name} (You)`}
+    const newDays = days.map((day) => {
+      //check if user is in coworkers array by id
+      if (
+        activeDays[day.number] &&
+        !day.coworkers.find((coworker) => coworker.id === user.id)) {
+        day.coworkers.unshift(nUser);
+      }
+      if (
+        !activeDays[day.number] &&
+        day.coworkers.find((coworker) => coworker.id === user.id)
+      ) {
+        day.coworkers = day.coworkers.filter((coworker) => coworker.id !== user.id);
+      }
+      return day;
+    })
+    setDays(newDays);
+
+  }, [activeDays]);
+  
+  const activeDayHandler = (day, value) => {
+    setActiveDays({
+      ...activeDays,
+      [day]: value,
+    })
+  }
+
+
 
   //create an array of coworker objects
   const coworkersByDay = days.map((day) => {
+    const coWorkers = day.coworkers;
     const obj = {
       day: day.slug,
-      coworkers: day.coworkers
+      coworkers: coWorkers
     }
     return obj
   })
@@ -115,6 +144,8 @@ export default function HomePage({
         </Text>
         <Calendar
           days={days}
+          activeDays={activeDays}
+          activeDayHandler={activeDayHandler}
         />
       </View>
 
