@@ -2,6 +2,7 @@ import {
   View,
   Text,
   StyleSheet,
+  TouchableOpacity,
 } from "react-native";
 
 export default function CalendarDay({
@@ -9,6 +10,7 @@ export default function CalendarDay({
   day,
   active = false,
   coworkers,
+  activeDayHandler,
 }) {
 
   const coworkerPips = () => {
@@ -19,7 +21,7 @@ export default function CalendarDay({
       pips.push(
         <View
           style={[styles.pip, {right: i * 10, backgroundColor: colors[i]}]}
-          key={i}
+          key={`${i}-${day}`}
         >
           {i === (length - 1) && <Text style={styles.pipText}>{coworkers}</Text>}
         </View>
@@ -28,8 +30,9 @@ export default function CalendarDay({
     return pips;
   };
   return (
-    <View
+    <TouchableOpacity
       style={styles.day}
+      onPress={() => activeDayHandler(number, !active)}
     >
       <View
         style={[styles.container, active && styles.containerActive]}
@@ -49,7 +52,7 @@ export default function CalendarDay({
       <View style={styles.pipContainer}>
         {coworkerPips()}
       </View>
-    </View>
+    </TouchableOpacity>
     
   )
 }

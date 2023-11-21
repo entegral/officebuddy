@@ -6,30 +6,38 @@ import HomePage from './HomePage/HomePage';
 import ToolBar from './ToolBar/ToolBar';
 
 export default function App() {
-  return (
-    <SafeAreaView style={styles.container}>
-      <ToolBar 
-        style={styles.toolBar}
-      />
-      <View
-        style={styles.mainContent}
-      >
-        <HomePage/>
-      </View>
-      {/* <Text>Hello world!</Text> */}
-      {/* <GetStarted 
-        headerBase={styles.headerBase}
-        buttonBase={styles.buttonBase}
-        buttonText={styles.buttonText}
-        textBase={styles.textBase}
-        linkBase={styles.linkBase}
-      /> */}
-      {/* <LogInType
-        headerBase={styles.headerBase}
-        buttonBase={styles.buttonBase}
-        buttonText={styles.buttonText}
-      /> */}
 
+  const user = {
+    name: 'Kevin Lasher',
+    office: 'New York',
+    id: 1,
+  }
+  return (
+    
+    <SafeAreaView style={styles.container}>
+      <View style={styles.toolbar}>
+        <ToolBar />
+      </View>
+      <View style={styles.mainContent}>
+        <HomePage
+          user={user}
+          buttonBase={styles.buttonBase}
+          buttonText={styles.buttonText}
+        />
+      </View>
+    {/* <GetStarted 
+    //     headerBase={styles.headerBase}
+    //     buttonBase={styles.buttonBase}
+    //     buttonText={styles.buttonText}
+    //     textBase={styles.textBase}
+    //     linkBase={styles.linkBase}
+    //   /> 
+    //   {/* <LogInType
+    //     headerBase={styles.headerBase}
+    //     buttonBase={styles.buttonBase}
+    //     buttonText={styles.buttonText}
+    //   /> 
+   */}
       <StatusBar style="light" />
     </SafeAreaView>
   );
@@ -38,15 +46,15 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    color: '#fff',
+    flexDirection: 'column',
     backgroundColor: '#272525',
   },
-  toolBar: {
+  toolbar: {
     height: 51,
   },
   mainContent:{
-    padding: 21,
-    flexGrow: 1,
+    paddingHorizontal: 21,
+    flex: 1,
   },
   // needs to be refactored?
   headerBase: {
@@ -87,3 +95,8 @@ const styles = StyleSheet.create({
 //todo: 
 //figure out how to add fonts
 //add linter
+
+//notes:
+//need to know office that user is in
+//need to know week number
+//give start date and end date rfc.3339 format

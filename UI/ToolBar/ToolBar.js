@@ -43,7 +43,6 @@ export default function ToolBar({
 
 const styles = StyleSheet.create({
   toolbar: {
-    height: 51,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'flex-start',
