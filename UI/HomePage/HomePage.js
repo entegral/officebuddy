@@ -16,7 +16,7 @@ export default function HomePage({
 }){
 
   //eventually this will be set by the initial api return
-  const initialDays = {
+  const [initialDays, setInitialDays] = useState({
     20: true,
     21: true,
     22: false,
@@ -24,7 +24,7 @@ export default function HomePage({
     24: false,
     25: false,
     26: false,
-  }
+  });
   const [days, setDays] = useState([
     {
       number: 20,
@@ -135,6 +135,11 @@ export default function HomePage({
     setActiveDays(nDays)
   }
 
+  const handleScheduleSubmit = () => {
+    //replace with a POST
+    setInitialDays({...activeDays});
+    setHasChanged(false);
+  }
 
 
   //create an array of coworker objects
@@ -184,6 +189,7 @@ export default function HomePage({
         }}>
           <TouchableOpacity
             style={buttonBase}
+            onPress={() => handleScheduleSubmit()}
           >
             <Text
               style={buttonText}
