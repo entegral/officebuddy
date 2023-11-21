@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "test-app",
-    "slug": "test-app",
+    "name": "Office Buddies",
+    "slug": "Office Buddies",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./Images/OfficialLogoMedium.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./Images/OfficialLogo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#272525"
     },
     "assetBundlePatterns": [
       "**/*"
