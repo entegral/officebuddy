@@ -1,37 +1,54 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View } from 'react-native';
+import { SafeAreaView, StyleSheet, View } from 'react-native';
 import LogInType from './LogIn/LogInType';
 import GetStarted from './GetStarted/GetStarted';
+import HomePage from './HomePage/HomePage';
+import ToolBar from './ToolBar/ToolBar';
 
 export default function App() {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <ToolBar 
+        style={styles.toolBar}
+      />
+      <View
+        style={styles.mainContent}
+      >
+        <HomePage/>
+      </View>
       {/* <Text>Hello world!</Text> */}
-      <GetStarted 
+      {/* <GetStarted 
         headerBase={styles.headerBase}
         buttonBase={styles.buttonBase}
         buttonText={styles.buttonText}
         textBase={styles.textBase}
         linkBase={styles.linkBase}
-      />
+      /> */}
       {/* <LogInType
         headerBase={styles.headerBase}
         buttonBase={styles.buttonBase}
         buttonText={styles.buttonText}
       /> */}
-      <StatusBar style="auto" />
-    </View>
+
+      <StatusBar style="light" />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
     color: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#272525',
   },
+  toolBar: {
+    height: 51,
+  },
+  mainContent:{
+    padding: 21,
+    flexGrow: 1,
+  },
+  // needs to be refactored?
   headerBase: {
     color: '#fff',
     fontSize: 34,
@@ -66,3 +83,7 @@ const styles = StyleSheet.create({
     fontWeight: 700,
   }
 });
+
+//todo: 
+//figure out how to add fonts
+//add linter
