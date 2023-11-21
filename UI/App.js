@@ -21,6 +21,8 @@ export default function App() {
       <View style={styles.mainContent}>
         <HomePage
           user={user}
+          buttonBase={styles.buttonBase}
+          buttonText={styles.buttonText}
         />
       </View>
     {/* <GetStarted 

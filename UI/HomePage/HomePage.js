@@ -4,13 +4,27 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  TouchableOpacity,
 } from "react-native";
 import Calendar from "./Calendar/Calendar";
 import CoworkerList from "./CoworkerList/CoworkerList";
 
 export default function HomePage({
   user,
+  buttonBase,
+  buttonText
 }){
+
+  //eventually this will be set by the initial api return
+  const initialDays = {
+    20: true,
+    21: true,
+    22: false,
+    23: false,
+    24: false,
+    25: false,
+    26: false,
+  }
   const [days, setDays] = useState([
     {
       number: 20,
@@ -78,14 +92,13 @@ export default function HomePage({
     },
   ]);
   const [activeDays, setActiveDays] = useState({
-    20: true,
-    21: true,
-    22: false,
-    23: false,
-    24: false,
-    25: false,
-    26: false,
   })
+  const [hasChanged, setHasChanged] = useState(false);
+
+  useEffect(() => {
+    const nDays = {...initialDays}
+    setActiveDays(nDays);
+  }, []);
 
   useEffect(() => {
     const nUser = { ...user, name: `${user.name} (You)`}
@@ -109,10 +122,17 @@ export default function HomePage({
   }, [activeDays]);
   
   const activeDayHandler = (day, value) => {
-    setActiveDays({
+    const nDays = {
       ...activeDays,
       [day]: value,
-    })
+    }
+    const areEqual = Object.keys(nDays).every(key => nDays[key] === initialDays[key]);
+    if (!areEqual) {
+      setHasChanged(true);
+    } else {
+      setHasChanged(false);
+    }
+    setActiveDays(nDays)
   }
 
 
@@ -156,6 +176,23 @@ export default function HomePage({
           coworkersByDay={coworkersByDay}
         />
       </ScrollView>
+      {hasChanged && (
+       <View
+        style={{
+          flex: 0,
+          maxHeight: '33%',
+        }}>
+          <TouchableOpacity
+            style={buttonBase}
+          >
+            <Text
+              style={buttonText}
+            >
+              Submit My Plan
+            </Text>
+          </TouchableOpacity>
+        </View> 
+      )}
     </View>
   )
 }
