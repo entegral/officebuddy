@@ -9,3 +9,14 @@ enum Role {
   ADMIN
   USER
 }
+
+
+extend type Query {
+  membership(userGUID: String!, officeGUID: String!): Office
+  memberships(userGUID: String, officeGUID: String): [Office!]
+}
+
+extend type Mutation {
+  putMembership(userGUID: String!, officeGUID: String!, role: Role!): Membership!
+  deleteMembership(userGUID: String!, officeGUID: String!): Boolean!
+}
