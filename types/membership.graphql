@@ -1,0 +1,11 @@
+type Membership {
+  UserGUID: String!
+  OfficeGUID: String!
+  Role: Role!
+  CreatedAt: String!
+}
+
+enum Role {
+  ADMIN
+  USER
+}

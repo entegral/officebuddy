@@ -7,15 +7,15 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	awstypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/entegral/toolbox/dynamo"
 	"github.com/entegral/toolbox/helpers"
-	"github.com/entegral/toolbox/types"
 )
 
 // Schedule is a type for defining a schedule for a given office.
 type Schedule struct {
-	types.Row
+	dynamo.Row
 	ScheduleGUID string    `json:"scheduleGUID"`
-	OfficeGUID   string    `json:"OfficeGUID"`
+	OfficeGUID   string    `json:"officeGUID"`
 	Start        time.Time `json:"start"`
 	End          time.Time `json:"end"`
 	Active       bool      `json:"active"`
@@ -60,8 +60,8 @@ func (s *Schedule) LoadSchedule(ctx context.Context) (loaded bool, err error) {
 	return false, nil
 }
 
-// LoadScheduleAssignments loads all office assignments for a given schedule
-func (s *Schedule) LoadScheduleAssignments(ctx context.Context) ([]Schedule, error) {
+// LoadSchedulesForOffice loads all schedules for a given office
+func (s *Schedule) LoadSchedulesForOffice(ctx context.Context) ([]Schedule, error) {
 	if s.ScheduleGUID == "" {
 		return nil, fmt.Errorf("office GUID is required to load schedules for office")
 	}
@@ -87,13 +87,13 @@ func (s *Schedule) LoadScheduleAssignments(ctx context.Context) ([]Schedule, err
 	return schedules, nil
 }
 
-// LoadSchedulesForOffice loads all schedules for a given office
-func (s *Schedule) LoadSchedulesForOffice(ctx context.Context) ([]Schedule, error) {
+// LoadScheduleAssignments loads all office assignments for a given schedule
+func (s *Schedule) LoadScheduleAssignments(ctx context.Context) ([]Schedule, error) {
 	if s.OfficeGUID == "" {
 		return nil, fmt.Errorf("office GUID is required to load schedules for office")
 	}
 	tablename := s.TableName(ctx)
-	gsi := types.GSI1.String()
+	gsi := helpers.GSI1.String()
 	exp := "pk1 = :pk1"
 	pk1, _ := s.Keys(1)
 	i := dynamodb.QueryInput{
@@ -120,8 +120,8 @@ func (s *Schedule) LoadSchedulesForOffice(ctx context.Context) ([]Schedule, erro
 func (s *Schedule) Keys(gsi int) (string, string) {
 	// For this example, assuming GUID is the partition key and Email is the sort key.
 	// Additional logic can be added to handle different GSIs if necessary.
-	s.Pk = "schedule:" + s.ScheduleGUID
-	s.Sk = "office:" + s.OfficeGUID
+	s.Pk = "office:" + s.OfficeGUID
+	s.Sk = "schedule:" + s.ScheduleGUID
 	s.Pk1 = s.Sk
 	s.Sk1 = s.Pk
 	switch gsi {

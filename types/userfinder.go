@@ -6,7 +6,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	awstypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/entegral/toolbox/helpers"
-	"github.com/entegral/toolbox/types"
 )
 
 type UserFinder struct {
@@ -21,7 +20,7 @@ type UserFinder struct {
 // LoadByGUID fetches the latest version of a user by GUID.
 func (u *UserFinder) LoadByGUID(ctx context.Context) (bool, error) {
 	tn := u.TableName(ctx)
-	in := types.GSI1.String()
+	in := helpers.GSI1.String()
 	pk1, sk1 := u.Keys(1)
 	kce := "pk1 = :pk1 and sk1 = :sk1"
 	i := dynamodb.QueryInput{

@@ -6,11 +6,11 @@ import (
 
 	"github.com/dgryski/trifles/uuid"
 	"github.com/entegral/toolbox/clients"
-	"github.com/entegral/toolbox/types"
+	"github.com/entegral/toolbox/dynamo"
 )
 
 type User struct {
-	types.Row
+	dynamo.Row
 	GUID      string `json:"guid"`
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
