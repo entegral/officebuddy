@@ -1,6 +1,6 @@
 type Membership {
-  UserGUID: String!
-  OfficeGUID: String!
+  User: User!
+  Office: Office!
   Role: Role!
   CreatedAt: String!
 }

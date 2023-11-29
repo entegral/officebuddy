@@ -7,19 +7,59 @@ package graph
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"github.com/entegral/officebuddy/graph/model"
 	"github.com/entegral/officebuddy/types"
+	"github.com/entegral/toolbox/helpers"
 )
 
+// User is the resolver for the User field.
+func (r *membershipResolver) User(ctx context.Context, obj *types.Membership) (*types.User, error) {
+	loaded, err := helpers.GetItem(ctx, obj.Entity0)
+	if err != nil {
+		return nil, err
+	}
+	if !loaded {
+		return nil, nil
+	}
+	return obj.Entity0, nil
+}
+
+// Office is the resolver for the Office field.
+func (r *membershipResolver) Office(ctx context.Context, obj *types.Membership) (*types.Office, error) {
+	loaded, err := helpers.GetItem(ctx, obj.Entity1)
+	if err != nil {
+		return nil, err
+	}
+	if !loaded {
+		return nil, nil
+	}
+	return obj.Entity1, nil
+}
+
+// CreatedAt is the resolver for the CreatedAt field.
+func (r *membershipResolver) CreatedAt(ctx context.Context, obj *types.Membership) (string, error) {
+	return obj.CreatedAt.UTC().Format(time.RFC3339), nil
+}
+
 // PutMembership is the resolver for the putMembership field.
-func (r *mutationResolver) PutMembership(ctx context.Context, userGUID string, officeGUID string, role types.Role) (*model.Membership, error) {
-	panic(fmt.Errorf("not implemented: PutMembership - putMembership"))
+func (r *mutationResolver) PutMembership(ctx context.Context, userGUID string, officeGUID string, role types.Role) (*types.Membership, error) {
+	membership := types.NewMembership(userGUID, officeGUID, role)
+	err := membership.Link(ctx, r.Clients)
+	if err != nil {
+		return nil, err
+	}
+	return membership, nil
 }
 
 // DeleteMembership is the resolver for the deleteMembership field.
 func (r *mutationResolver) DeleteMembership(ctx context.Context, userGUID string, officeGUID string) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteMembership - deleteMembership"))
+	membership := types.NewMembership(userGUID, officeGUID, types.RoleMember)
+	err := membership.Unlink(ctx, r.Clients)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // Membership is the resolver for the membership field.
@@ -31,3 +71,8 @@ func (r *queryResolver) Membership(ctx context.Context, userGUID string, officeG
 func (r *queryResolver) Memberships(ctx context.Context, userGUID *string, officeGUID *string) ([]*types.Office, error) {
 	panic(fmt.Errorf("not implemented: Memberships - memberships"))
 }
+
+// Membership returns MembershipResolver implementation.
+func (r *Resolver) Membership() MembershipResolver { return &membershipResolver{r} }
+
+type membershipResolver struct{ *Resolver }

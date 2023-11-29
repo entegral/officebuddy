@@ -6,11 +6,22 @@ import (
 	"github.com/entegral/toolbox/dynamo"
 )
 
-// OfficeMembership is a type for defining a membership of a user to an office.
-type OfficeMembership struct {
+// Membership is a type for defining a membership of a user to an office.
+type Membership struct {
 	dynamo.Linker[*User, *Office]
 	Role      Role      `json:"role"`
 	CreatedAt time.Time `json:"createdAt"`
+}
+
+func NewMembership(userGUID, officeGUID string, role Role) *Membership {
+	return &Membership{
+		Linker: dynamo.Linker[*User, *Office]{
+			Entity0: &User{GUID: userGUID},
+			Entity1: &Office{GUID: officeGUID},
+		},
+		Role:      role,
+		CreatedAt: time.Now(),
+	}
 }
 
 // Role is a type for defining the role of a user in an office.

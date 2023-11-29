@@ -2,17 +2,6 @@
 
 package model
 
-import (
-	"github.com/entegral/officebuddy/types"
-)
-
 type Dummy struct {
 	Name *string `json:"name,omitempty"`
-}
-
-type Membership struct {
-	UserGUID   string     `json:"UserGUID"`
-	OfficeGUID string     `json:"OfficeGUID"`
-	Role       types.Role `json:"Role"`
-	CreatedAt  string     `json:"CreatedAt"`
 }
