@@ -7,10 +7,12 @@ package graph
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/entegral/officebuddy/types"
 	"github.com/entegral/toolbox/helpers"
+	"github.com/sirupsen/logrus"
 )
 
 // User is the resolver for the User field.
@@ -45,7 +47,22 @@ func (r *membershipResolver) CreatedAt(ctx context.Context, obj *types.Membershi
 // PutMembership is the resolver for the putMembership field.
 func (r *mutationResolver) PutMembership(ctx context.Context, userGUID string, officeGUID string, role types.Role) (*types.Membership, error) {
 	membership := types.NewMembership(userGUID, officeGUID, role)
-	err := membership.Link(ctx, r.Clients)
+	u, err := helpers.QueryByGSI[*types.User](ctx, 1, "user:"+userGUID, "userinfo")
+	if err != nil {
+		return nil, err
+	}
+	if len(u) == 1 {
+		membership.Entity0 = u[0]
+	} else {
+		logrus.WithFields(logrus.Fields{
+			"guid":  userGUID,
+			"users": u,
+		}).Error("user not found")
+		return nil, fmt.Errorf("user not found")
+	}
+	slog.Group("putMembership", "membership", membership.Entity0)
+
+	err = membership.Link(ctx, r.Clients)
 	if err != nil {
 		return nil, err
 	}

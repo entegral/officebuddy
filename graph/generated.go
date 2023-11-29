@@ -126,7 +126,7 @@ type MembershipResolver interface {
 	CreatedAt(ctx context.Context, obj *types.Membership) (string, error)
 }
 type MutationResolver interface {
-	Users(ctx context.Context, input []*types.UserSaver) (*types.User, error)
+	Users(ctx context.Context, input []*types.UserSaver) ([]*types.User, error)
 	PutMembership(ctx context.Context, userGUID string, officeGUID string, role types.Role) (*types.Membership, error)
 	DeleteMembership(ctx context.Context, userGUID string, officeGUID string) (bool, error)
 	CreateSchedule(ctx context.Context, schedule types.ScheduleSaver) (*types.Schedule, error)
@@ -762,7 +762,7 @@ type Query {
 }
 
 type Mutation {
-  Users(input: [UserSaver!]): User
+  Users(input: [UserSaver!]): [User]
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -1614,9 +1614,9 @@ func (ec *executionContext) _Mutation_Users(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*types.User)
+	res := resTmp.([]*types.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_Users(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7336,6 +7336,47 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	}
 	res := graphql.MarshalString(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUser(ctx context.Context, sel ast.SelectionSet, v []*types.User) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUser(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
 }
 
 func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.User) graphql.Marshaler {

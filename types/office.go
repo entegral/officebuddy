@@ -46,9 +46,11 @@ type Address struct {
 func (o Office) Keys(gsi int) (string, string) {
 	// For this example, assuming GUID is the partition key and Email is the sort key.
 	// Additional logic can be added to handle different GSIs if necessary.
+	o.Pk = "office:" + o.GUID
+	o.Sk = "info"
 	switch gsi {
 	case 0: // Primary keys
-		return "office:" + o.GUID, "info"
+		return o.Pk, o.Sk
 	default:
 		// Handle other GSIs or return an error
 		return "", ""

@@ -11,10 +11,10 @@ import (
 
 type User struct {
 	dynamo.Row
-	GUID      string `json:"guid"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Email     string `json:"email"`
+	GUID      string `json:"guid,omitempty"`
+	FirstName string `json:"firstName,omitempty"`
+	LastName  string `json:"lastName,omitempty"`
+	Email     string `json:"email,omitempty"`
 	// AdminOf   []*Office `json:"adminOf,omitempty"`
 }
 
