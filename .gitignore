@@ -2,6 +2,7 @@
 
 # dependencies
 /UI/node_modules
+/UI/.expo/settings.json
 /.pnp
 .pnp.js
 
