@@ -64,6 +64,8 @@ github.com/entegral/toolbox v0.0.2-0.20231116220105-a1b95d718761 h1:OpZdF88SaMuE
 github.com/entegral/toolbox v0.0.2-0.20231116220105-a1b95d718761/go.mod h1:XxviLnkPOSSe0FM0QVnRNB4M0GkWz/CzfAaW+X9mvtI=
 github.com/entegral/toolbox v0.0.2-0.20231116230455-eb1f9f0f6be9 h1:ptQIVLYp3XKU4uIFikcFAg0wS9o8Pjf1RFXDtxu5SCs=
 github.com/entegral/toolbox v0.0.2-0.20231116230455-eb1f9f0f6be9/go.mod h1:XxviLnkPOSSe0FM0QVnRNB4M0GkWz/CzfAaW+X9mvtI=
+github.com/entegral/toolbox v0.0.2-0.20231129000259-08ec89134e4b h1:5xqNgpuyGar897iYTNwDckHk9fdKtcRP8ntV2nuAFF8=
+github.com/entegral/toolbox v0.0.2-0.20231129000259-08ec89134e4b/go.mod h1:XxviLnkPOSSe0FM0QVnRNB4M0GkWz/CzfAaW+X9mvtI=
 github.com/google/go-cmp v0.5.8 h1:e6P7q2lk1O+qJJb4BtCQXlK8vWEO8V1ZeuEdJNOqZyg=
 github.com/google/go-cmp v0.5.8/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
