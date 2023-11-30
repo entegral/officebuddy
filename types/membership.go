@@ -4,34 +4,36 @@ import (
 	"context"
 	"time"
 
-	"github.com/entegral/toolbox/clients"
 	"github.com/entegral/toolbox/dynamo"
 	"github.com/entegral/toolbox/helpers"
 )
 
 // Membership is a type for defining a membership of a user to an office.
 type Membership struct {
-	dynamo.Linker[*User, *Office]
+	dynamo.DiLink[*User, *Office]
 	Role      Role      `json:"role"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-// Link links the membership to the user and office.
-func (m *Membership) Link(ctx context.Context, clients clients.Client) error {
-	_, err := helpers.PutItem(ctx, m)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+// // Disconnect links the membership to the user and office.
+// func (m *Membership) Disconnect(ctx context.Context, clients clients.Client) error {
+// 	_, err := helpers.PutItem(ctx, m)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
 
 type NewMembershipErrors string
 
 const (
-	ErrUserNotFound     NewMembershipErrors = "user not found"
+	// ErrUserNotFound is the error for when a user is not found.
+	ErrUserNotFound NewMembershipErrors = "user not found"
+	// ErrorOfficeNotFound is the error for when an office is not found.
 	ErrorOfficeNotFound NewMembershipErrors = "office not found"
 )
 
+// NewMembershipError is the error type for when a new membership cannot be created.
 type NewMembershipError struct {
 	message NewMembershipErrors
 }
@@ -41,14 +43,18 @@ func (e NewMembershipError) Error() string {
 }
 
 // NewMembership simplifies the creation of a new membership.
-func NewMembership(email, officeGUID string, role Role) (*Membership, error) {
+// If either the user or office is not found, an error is returned.
+func NewMembership(email, officeGUID string, role Role, modifyKeys func(*dynamo.Row, *User, *Office) error) (*Membership, error) {
 	membership := &Membership{
-		Linker: dynamo.Linker[*User, *Office]{
+		DiLink: dynamo.DiLink[*User, *Office]{
 			Entity0: &User{Email: email},
 			Entity1: &Office{GUID: officeGUID},
 		},
 		Role:      role,
 		CreatedAt: time.Now(),
+	}
+	if modifyKeys != nil {
+		membership.ModifyKeys = modifyKeys
 	}
 	loaded0, err := helpers.GetItem(context.Background(), membership.Entity0)
 	if err != nil {

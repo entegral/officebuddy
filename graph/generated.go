@@ -81,7 +81,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CreateSchedule   func(childComplexity int, schedule types.ScheduleSaver) int
-		DeleteMembership func(childComplexity int, userGUID string, officeGUID string) int
+		DeleteMembership func(childComplexity int, email string, officeGUID string) int
 		DeleteOffice     func(childComplexity int, officeGUID string) int
 		DeleteSchedule   func(childComplexity int, scheduleGUID string, officeGUID string) int
 		PutMembership    func(childComplexity int, email string, officeGUID string, role types.Role) int
@@ -139,7 +139,7 @@ type MembershipResolver interface {
 type MutationResolver interface {
 	Users(ctx context.Context, input []*types.UserSaver) ([]*types.User, error)
 	PutMembership(ctx context.Context, email string, officeGUID string, role types.Role) (*types.Membership, error)
-	DeleteMembership(ctx context.Context, userGUID string, officeGUID string) (bool, error)
+	DeleteMembership(ctx context.Context, email string, officeGUID string) (bool, error)
 	PutOffice(ctx context.Context, guid *string, name string, createdByEmail string, address types.AddressInput, description *string) (*types.Office, error)
 	DeleteOffice(ctx context.Context, officeGUID string) (*types.Office, error)
 	CreateSchedule(ctx context.Context, schedule types.ScheduleSaver) (*types.Schedule, error)
@@ -319,7 +319,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteMembership(childComplexity, args["userGUID"].(string), args["officeGUID"].(string)), true
+		return e.complexity.Mutation.DeleteMembership(childComplexity, args["email"].(string), args["officeGUID"].(string)), true
 
 	case "Mutation.deleteOffice":
 		if e.complexity.Mutation.DeleteOffice == nil {
@@ -743,8 +743,8 @@ var sources = []*ast.Source{
   offices: [Office!]
 }`, BuiltIn: false},
 	{Name: "../types/membership.graphql", Input: `type Membership {
-  User: User!
-  Office: Office!
+  User: User
+  Office: Office
   Role: Role!
   CreatedAt: String!
 }
@@ -761,8 +761,8 @@ extend type Query {
 }
 
 extend type Mutation {
-  putMembership(email: String!, officeGUID: String!, role: Role!): Membership!
-  deleteMembership(userGUID: String!, officeGUID: String!): Boolean!
+  putMembership(email: String!, officeGUID: String!, role: Role!): Membership
+  deleteMembership(email: String!, officeGUID: String!): Boolean!
 }`, BuiltIn: false},
 	{Name: "../types/office.graphql", Input: `
 type Office {
@@ -908,14 +908,14 @@ func (ec *executionContext) field_Mutation_deleteMembership_args(ctx context.Con
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["userGUID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userGUID"))
+	if tmp, ok := rawArgs["email"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["userGUID"] = arg0
+	args["email"] = arg0
 	var arg1 string
 	if tmp, ok := rawArgs["officeGUID"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("officeGUID"))
@@ -1799,14 +1799,11 @@ func (ec *executionContext) _Membership_User(ctx context.Context, field graphql.
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*types.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Membership_User(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1855,14 +1852,11 @@ func (ec *executionContext) _Membership_Office(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*types.Office)
 	fc.Result = res
-	return ec.marshalNOffice2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐOffice(ctx, field.Selections, res)
+	return ec.marshalOOffice2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐOffice(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Membership_Office(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2069,14 +2063,11 @@ func (ec *executionContext) _Mutation_putMembership(ctx context.Context, field g
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*types.Membership)
 	fc.Result = res
-	return ec.marshalNMembership2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐMembership(ctx, field.Selections, res)
+	return ec.marshalOMembership2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐMembership(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_putMembership(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2127,7 +2118,7 @@ func (ec *executionContext) _Mutation_deleteMembership(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteMembership(rctx, fc.Args["userGUID"].(string), fc.Args["officeGUID"].(string))
+		return ec.resolvers.Mutation().DeleteMembership(rctx, fc.Args["email"].(string), fc.Args["officeGUID"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6286,9 +6277,6 @@ func (ec *executionContext) _Membership(ctx context.Context, sel ast.SelectionSe
 					}
 				}()
 				res = ec._Membership_User(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -6322,9 +6310,6 @@ func (ec *executionContext) _Membership(ctx context.Context, sel ast.SelectionSe
 					}
 				}()
 				res = ec._Membership_Office(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -6439,9 +6424,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_putMembership(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "deleteMembership":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteMembership(ctx, field)
@@ -7475,10 +7457,6 @@ func (ec *executionContext) marshalNEvent2ᚖgithubᚗcomᚋentegralᚋofficebud
 	return ec._Event(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNMembership2githubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐMembership(ctx context.Context, sel ast.SelectionSet, v types.Membership) graphql.Marshaler {
-	return ec._Membership(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNMembership2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐMembership(ctx context.Context, sel ast.SelectionSet, v *types.Membership) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -7487,10 +7465,6 @@ func (ec *executionContext) marshalNMembership2ᚖgithubᚗcomᚋentegralᚋoffi
 		return graphql.Null
 	}
 	return ec._Membership(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNOffice2githubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐOffice(ctx context.Context, sel ast.SelectionSet, v types.Office) graphql.Marshaler {
-	return ec._Office(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNOffice2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐOffice(ctx context.Context, sel ast.SelectionSet, v *types.Office) graphql.Marshaler {
@@ -7556,10 +7530,6 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNUser2githubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUser(ctx context.Context, sel ast.SelectionSet, v types.User) graphql.Marshaler {
-	return ec._User(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUser(ctx context.Context, sel ast.SelectionSet, v *types.User) graphql.Marshaler {

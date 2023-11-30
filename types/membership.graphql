@@ -1,6 +1,6 @@
 type Membership {
-  User: User!
-  Office: Office!
+  User: User
+  Office: Office
   Role: Role!
   CreatedAt: String!
 }
@@ -17,6 +17,6 @@ extend type Query {
 }
 
 extend type Mutation {
-  putMembership(email: String!, officeGUID: String!, role: Role!): Membership!
-  deleteMembership(userGUID: String!, officeGUID: String!): Boolean!
+  putMembership(email: String!, officeGUID: String!, role: Role!): Membership
+  deleteMembership(email: String!, officeGUID: String!): Boolean!
 }

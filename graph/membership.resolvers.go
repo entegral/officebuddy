@@ -44,18 +44,12 @@ func (r *membershipResolver) CreatedAt(ctx context.Context, obj *types.Membershi
 
 // PutMembership is the resolver for the putMembership field.
 func (r *mutationResolver) PutMembership(ctx context.Context, email string, officeGUID string, role types.Role) (*types.Membership, error) {
-	membership, err := types.NewMembership(email, officeGUID, role)
+	membership, err := types.NewMembership(email, officeGUID, role, nil)
 	if err != nil {
 		return nil, err
 	}
-	loaded, err := helpers.GetItem(ctx, membership.Entity0)
-	if err != nil {
-		return nil, err
-	}
-	if !loaded {
-		return nil, fmt.Errorf("user not found")
-	}
-	err = membership.Link(ctx, r.Clients)
+	skSuffix := "officeGUID:" + officeGUID
+	err = membership.Link(ctx, r.Clients, &skSuffix)
 	if err != nil {
 		return nil, err
 	}
@@ -63,12 +57,13 @@ func (r *mutationResolver) PutMembership(ctx context.Context, email string, offi
 }
 
 // DeleteMembership is the resolver for the deleteMembership field.
-func (r *mutationResolver) DeleteMembership(ctx context.Context, userGUID string, officeGUID string) (bool, error) {
-	membership, err := types.NewMembership(userGUID, officeGUID, types.RoleMember)
+func (r *mutationResolver) DeleteMembership(ctx context.Context, email string, officeGUID string) (bool, error) {
+	membership, err := types.NewMembership(email, officeGUID, types.RoleMember, nil)
 	if err != nil {
 		return false, err
 	}
-	err = membership.Unlink(ctx, r.Clients)
+	skSuffix := "officeGUID:" + officeGUID
+	err = membership.Unlink(ctx, r.Clients, &skSuffix)
 	if err != nil {
 		return false, err
 	}
@@ -77,7 +72,7 @@ func (r *mutationResolver) DeleteMembership(ctx context.Context, userGUID string
 
 // Membership is the resolver for the membership field.
 func (r *queryResolver) Membership(ctx context.Context, email string, officeGUID string) (*types.Membership, error) {
-	membership, err := types.NewMembership(email, officeGUID, types.RoleMember)
+	membership, err := types.NewMembership(email, officeGUID, types.RoleMember, nil)
 	if err != nil {
 		return nil, err
 	}
