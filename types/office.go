@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 
+	"github.com/dgryski/trifles/uuid"
 	"github.com/entegral/toolbox/dynamo"
 )
 
@@ -11,8 +12,24 @@ type Office struct {
 	dynamo.Row
 	GUID        string   `json:"guid"`
 	Name        string   `json:"name"`
+	CreatedBy   string   `json:"createdBy"`
 	Description *string  `json:"description,omitempty"`
 	Address     *Address `json:"address,omitempty"`
+}
+
+// NewOffice simplifies the creation of a new office.
+func NewOffice(ctx context.Context, name, createdBy string, guid, description *string, address Address) Office {
+	o := Office{
+		Name:        name,
+		Description: description,
+		CreatedBy:   createdBy,
+		Address:     &address,
+		GUID:        uuid.UUIDv4(),
+	}
+	if guid != nil && *guid != "" {
+		o.GUID = *guid
+	}
+	return o
 }
 
 // Events returns the events for the office
@@ -33,12 +50,16 @@ func (o Office) Admins(ctx context.Context) ([]*User, error) {
 	return nil, nil
 }
 
+type AddressInput struct {
+	Address
+}
+
 // Address is a type for defining an address.
 type Address struct {
 	Street  string `json:"street"`
 	City    string `json:"city"`
 	State   string `json:"state"`
-	ZipCode string `json:"zipCode"`
+	Zip     string `json:"zip"`
 	Country string `json:"country"`
 }
 
@@ -46,6 +67,9 @@ type Address struct {
 func (o Office) Keys(gsi int) (string, string) {
 	// For this example, assuming GUID is the partition key and Email is the sort key.
 	// Additional logic can be added to handle different GSIs if necessary.
+	if o.GUID == "" {
+		panic("GUID must be set before calling office.Keys()")
+	}
 	o.Pk = "office:" + o.GUID
 	o.Sk = "info"
 	switch gsi {

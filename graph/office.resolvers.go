@@ -6,10 +6,26 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/entegral/officebuddy/types"
 	"github.com/entegral/toolbox/helpers"
 )
+
+// PutOffice is the resolver for the putOffice field.
+func (r *mutationResolver) PutOffice(ctx context.Context, guid *string, name string, createdByEmail string, address types.AddressInput, description *string) (*types.Office, error) {
+	office := types.NewOffice(ctx, name, createdByEmail, guid, description, address.Address)
+	_, err := helpers.PutItem(ctx, &office)
+	if err != nil {
+		return nil, err
+	}
+	return &office, nil
+}
+
+// DeleteOffice is the resolver for the deleteOffice field.
+func (r *mutationResolver) DeleteOffice(ctx context.Context, officeGUID string) (*types.Office, error) {
+	panic(fmt.Errorf("not implemented: DeleteOffice - deleteOffice"))
+}
 
 // Schedules is the resolver for the schedules field.
 func (r *officeResolver) Schedules(ctx context.Context, obj *types.Office, scheduleGUID *string) ([]*types.Schedule, error) {

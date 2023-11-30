@@ -12,11 +12,11 @@ enum Role {
 
 
 extend type Query {
-  membership(userGUID: String!, officeGUID: String!): Office
-  memberships(userGUID: String, officeGUID: String): [Office!]
+  membership(email: String!, officeGUID: String!): Membership
+  memberships(userGUID: String, officeGUID: String): [Membership!]
 }
 
 extend type Mutation {
-  putMembership(userGUID: String!, officeGUID: String!, role: Role!): Membership!
+  putMembership(email: String!, officeGUID: String!, role: Role!): Membership!
   deleteMembership(userGUID: String!, officeGUID: String!): Boolean!
 }

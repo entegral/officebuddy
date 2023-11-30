@@ -7,12 +7,10 @@ package graph
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/entegral/officebuddy/types"
 	"github.com/entegral/toolbox/helpers"
-	"github.com/sirupsen/logrus"
 )
 
 // User is the resolver for the User field.
@@ -45,23 +43,18 @@ func (r *membershipResolver) CreatedAt(ctx context.Context, obj *types.Membershi
 }
 
 // PutMembership is the resolver for the putMembership field.
-func (r *mutationResolver) PutMembership(ctx context.Context, userGUID string, officeGUID string, role types.Role) (*types.Membership, error) {
-	membership := types.NewMembership(userGUID, officeGUID, role)
-	u, err := helpers.QueryByGSI[*types.User](ctx, 1, "user:"+userGUID, "userinfo")
+func (r *mutationResolver) PutMembership(ctx context.Context, email string, officeGUID string, role types.Role) (*types.Membership, error) {
+	membership, err := types.NewMembership(email, officeGUID, role)
 	if err != nil {
 		return nil, err
 	}
-	if len(u) == 1 {
-		membership.Entity0 = u[0]
-	} else {
-		logrus.WithFields(logrus.Fields{
-			"guid":  userGUID,
-			"users": u,
-		}).Error("user not found")
+	loaded, err := helpers.GetItem(ctx, membership.Entity0)
+	if err != nil {
+		return nil, err
+	}
+	if !loaded {
 		return nil, fmt.Errorf("user not found")
 	}
-	slog.Group("putMembership", "membership", membership.Entity0)
-
 	err = membership.Link(ctx, r.Clients)
 	if err != nil {
 		return nil, err
@@ -71,8 +64,11 @@ func (r *mutationResolver) PutMembership(ctx context.Context, userGUID string, o
 
 // DeleteMembership is the resolver for the deleteMembership field.
 func (r *mutationResolver) DeleteMembership(ctx context.Context, userGUID string, officeGUID string) (bool, error) {
-	membership := types.NewMembership(userGUID, officeGUID, types.RoleMember)
-	err := membership.Unlink(ctx, r.Clients)
+	membership, err := types.NewMembership(userGUID, officeGUID, types.RoleMember)
+	if err != nil {
+		return false, err
+	}
+	err = membership.Unlink(ctx, r.Clients)
 	if err != nil {
 		return false, err
 	}
@@ -80,12 +76,23 @@ func (r *mutationResolver) DeleteMembership(ctx context.Context, userGUID string
 }
 
 // Membership is the resolver for the membership field.
-func (r *queryResolver) Membership(ctx context.Context, userGUID string, officeGUID string) (*types.Office, error) {
-	panic(fmt.Errorf("not implemented: Membership - membership"))
+func (r *queryResolver) Membership(ctx context.Context, email string, officeGUID string) (*types.Membership, error) {
+	membership, err := types.NewMembership(email, officeGUID, types.RoleMember)
+	if err != nil {
+		return nil, err
+	}
+	loaded, err := helpers.GetItem(ctx, membership)
+	if err != nil {
+		return nil, err
+	}
+	if !loaded {
+		return nil, nil
+	}
+	return membership, nil
 }
 
 // Memberships is the resolver for the memberships field.
-func (r *queryResolver) Memberships(ctx context.Context, userGUID *string, officeGUID *string) ([]*types.Office, error) {
+func (r *queryResolver) Memberships(ctx context.Context, userGUID *string, officeGUID *string) ([]*types.Membership, error) {
 	panic(fmt.Errorf("not implemented: Memberships - memberships"))
 }
 
