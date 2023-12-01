@@ -15,7 +15,7 @@ export default function App() {
   return (
     
     <SafeAreaView style={styles.container}>
-      <View style={styles.toolbar}>
+      {/* <View style={styles.toolbar}>
         <ToolBar />
       </View>
       <View style={styles.mainContent}>
@@ -24,15 +24,15 @@ export default function App() {
           buttonBase={styles.buttonBase}
           buttonText={styles.buttonText}
         />
-      </View>
-    {/* <GetStarted 
-    //     headerBase={styles.headerBase}
-    //     buttonBase={styles.buttonBase}
-    //     buttonText={styles.buttonText}
-    //     textBase={styles.textBase}
-    //     linkBase={styles.linkBase}
-    //   /> 
-    //   {/* <LogInType
+      </View> */}
+    <GetStarted 
+      headerBase={styles.headerBase}
+      buttonBase={styles.buttonBase}
+      buttonText={styles.buttonText}
+      textBase={styles.textBase}
+      linkBase={styles.linkBase}
+    /> 
+    {/* <LogInType
     //     headerBase={styles.headerBase}
     //     buttonBase={styles.buttonBase}
     //     buttonText={styles.buttonText}

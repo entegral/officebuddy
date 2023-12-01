@@ -5,6 +5,8 @@ import {
   View
 } from "react-native";
 
+import buttonStyles from '../Styles/buttons';
+
 export default function GetStarted({
   headerBase,
   buttonBase,
@@ -30,7 +32,7 @@ export default function GetStarted({
         styles={styles.buttonsDiv}
       >
         <TouchableOpacity
-          style={buttonBase}
+          style={buttonStyles.buttonBase}
         >
           <Text
             style={buttonText}
