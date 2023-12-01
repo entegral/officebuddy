@@ -39,7 +39,7 @@ require (
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/dgryski/trifles v0.0.0-20230903005119-f50d829f2e54
-	github.com/entegral/toolbox v0.0.2-0.20231130191807-b33c886ada27
+	github.com/entegral/toolbox v0.0.2-0.20231201232932-659a44692555
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.3 // indirect

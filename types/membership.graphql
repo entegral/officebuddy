@@ -7,13 +7,7 @@ type Membership {
 
 enum Role {
   ADMIN
-  USER
-}
-
-
-extend type Query {
-  membership(email: String!, officeGUID: String!): Membership
-  memberships(userGUID: String, officeGUID: String): [Membership!]
+  MEMBER
 }
 
 extend type Mutation {

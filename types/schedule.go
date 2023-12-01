@@ -22,6 +22,10 @@ type Schedule struct {
 	Coworkers    []*User   `json:"coworkers,omitempty"`
 }
 
+func (s *Schedule) Type() string {
+	return "schedule"
+}
+
 type ScheduleSaver struct {
 	Schedule
 }

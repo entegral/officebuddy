@@ -3,7 +3,7 @@ type User {
   firstName: String!
   lastName: String!
   email: String!
-  adminOf: [Office!]
+  memberships: [Office!]
 }
 
 input UserSaver {

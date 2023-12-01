@@ -9,6 +9,8 @@ import (
 	"fmt"
 
 	"github.com/entegral/officebuddy/types"
+	"github.com/entegral/toolbox/clients"
+	"github.com/entegral/toolbox/dynamo"
 	"github.com/entegral/toolbox/helpers"
 )
 
@@ -34,10 +36,12 @@ func (r *queryResolver) Users(ctx context.Context, input []*types.UserFinder) ([
 	ret := []*types.User{}
 	for _, u := range input {
 		user := u.User
-		if found, err := u.LoadByEmail(ctx); found && err == nil {
-			ret = append(ret, &user)
-		} else if err != nil {
+		loaded, err := helpers.GetItem(ctx, &user)
+		if err != nil {
 			return nil, err
+		}
+		if loaded {
+			ret = append(ret, &user)
 		}
 	}
 	return ret, nil
@@ -48,9 +52,13 @@ func (r *queryResolver) Admins(ctx context.Context, groupGUID string) ([]*types.
 	panic(fmt.Errorf("not implemented: Admins - admins"))
 }
 
-// AdminOf is the resolver for the adminOf field.
-func (r *userResolver) AdminOf(ctx context.Context, obj *types.User) ([]*types.Office, error) {
-	panic(fmt.Errorf("not implemented: AdminOf - adminOf"))
+// Memberships is the resolver for the memberships field.
+func (r *userResolver) Memberships(ctx context.Context, obj *types.User) ([]*types.Office, error) {
+	offices, err := dynamo.FindEntity1Links[*types.User, *types.Office](ctx, *clients.GetDefaultClient(ctx), obj)
+	if err != nil {
+		return nil, err
+	}
+	return offices, nil
 }
 
 // Mutation returns MutationResolver implementation.

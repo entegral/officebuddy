@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/entegral/toolbox/clients"
 	"github.com/entegral/toolbox/dynamo"
 	"github.com/entegral/toolbox/helpers"
 )
@@ -15,14 +16,15 @@ type Membership struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-// // Disconnect links the membership to the user and office.
-// func (m *Membership) Disconnect(ctx context.Context, clients clients.Client) error {
-// 	_, err := helpers.PutItem(ctx, m)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
+func (m *Membership) Type() string {
+	return "membership"
+}
+
+// Link we will override the default Link method to add the role and createdAt fields.
+func (m *Membership) Link(ctx context.Context, clients clients.Client) error {
+	_, err := helpers.PutItem(ctx, m)
+	return err
+}
 
 type NewMembershipErrors string
 
@@ -42,35 +44,16 @@ func (e NewMembershipError) Error() string {
 	return string(e.message)
 }
 
-// NewMembership simplifies the creation of a new membership.
+// LoadMembership simplifies the loading of a membership from dynamo.
 // If either the user or office is not found, an error is returned.
-func NewMembership(email, officeGUID string, role Role, modifyKeys func(*dynamo.Row, *User, *Office) error) (*Membership, error) {
+func LoadMembership(email, officeGUID string, role Role) (*Membership, error) {
+	dilink, newErr := dynamo.CheckLink[*User, *Office](&User{Email: email}, &Office{GUID: officeGUID}, dynamo.OneToMany)
 	membership := &Membership{
-		DiLink: dynamo.DiLink[*User, *Office]{
-			Entity0: &User{Email: email},
-			Entity1: &Office{GUID: officeGUID},
-		},
+		DiLink:    *dilink,
 		Role:      role,
 		CreatedAt: time.Now(),
 	}
-	if modifyKeys != nil {
-		membership.ModifyKeys = modifyKeys
-	}
-	loaded0, err := helpers.GetItem(context.Background(), membership.Entity0)
-	if err != nil {
-		return nil, err
-	}
-	if !loaded0 {
-		return nil, NewMembershipError{message: ErrUserNotFound}
-	}
-	loaded1, err := helpers.GetItem(context.Background(), membership.Entity1)
-	if err != nil {
-		return nil, err
-	}
-	if !loaded1 {
-		return nil, NewMembershipError{message: ErrorOfficeNotFound}
-	}
-	return membership, nil
+	return membership, newErr
 }
 
 // Role is a type for defining the role of a user in an office.
@@ -87,7 +70,3 @@ const (
 	// RoleMember is the member role.
 	RoleMember Role = "member"
 )
-
-func a() {
-
-}

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/dgryski/trifles/uuid"
+	"github.com/entegral/toolbox/clients"
 	"github.com/entegral/toolbox/dynamo"
 )
 
@@ -15,6 +16,10 @@ type Office struct {
 	CreatedBy   string   `json:"createdBy"`
 	Description *string  `json:"description,omitempty"`
 	Address     *Address `json:"address,omitempty"`
+}
+
+func (o *Office) Type() string {
+	return "office"
 }
 
 // NewOffice simplifies the creation of a new office.
@@ -40,8 +45,11 @@ func (o Office) Events(ctx context.Context) ([]*Event, error) {
 
 // Members returns the members for the office
 func (o Office) Members(ctx context.Context) ([]*User, error) {
-	// load the members for the office by querying the office_members GSI
-	return nil, nil
+	users, err := dynamo.FindEntity0Links[*User, *Office](ctx, *clients.GetDefaultClient(ctx), &o)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }
 
 // Admins returns the admins for the office
@@ -67,9 +75,7 @@ type Address struct {
 func (o Office) Keys(gsi int) (string, string) {
 	// For this example, assuming GUID is the partition key and Email is the sort key.
 	// Additional logic can be added to handle different GSIs if necessary.
-	if o.GUID == "" {
-		panic("GUID must be set before calling office.Keys()")
-	}
+
 	o.Pk = "office:" + o.GUID
 	o.Sk = "info"
 	switch gsi {

@@ -104,8 +104,6 @@ type ComplexityRoot struct {
 		Admins             func(childComplexity int, groupGUID string) int
 		GetOfficeSchedules func(childComplexity int, input types.ScheduleFinder) int
 		GetSchedule        func(childComplexity int, scheduleGUID string, officeGUID string) int
-		Membership         func(childComplexity int, email string, officeGUID string) int
-		Memberships        func(childComplexity int, userGUID *string, officeGUID *string) int
 		Office             func(childComplexity int, officeGUID string) int
 		Offices            func(childComplexity int, userGUID string) int
 		Users              func(childComplexity int, input []*types.UserFinder) int
@@ -122,11 +120,11 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		AdminOf   func(childComplexity int) int
-		Email     func(childComplexity int) int
-		FirstName func(childComplexity int) int
-		GUID      func(childComplexity int) int
-		LastName  func(childComplexity int) int
+		Email       func(childComplexity int) int
+		FirstName   func(childComplexity int) int
+		GUID        func(childComplexity int) int
+		LastName    func(childComplexity int) int
+		Memberships func(childComplexity int) int
 	}
 }
 
@@ -151,8 +149,6 @@ type OfficeResolver interface {
 type QueryResolver interface {
 	Users(ctx context.Context, input []*types.UserFinder) ([]*types.User, error)
 	Admins(ctx context.Context, groupGUID string) ([]*types.User, error)
-	Membership(ctx context.Context, email string, officeGUID string) (*types.Membership, error)
-	Memberships(ctx context.Context, userGUID *string, officeGUID *string) ([]*types.Membership, error)
 	Office(ctx context.Context, officeGUID string) (*types.Office, error)
 	Offices(ctx context.Context, userGUID string) ([]*types.Office, error)
 	GetSchedule(ctx context.Context, scheduleGUID string, officeGUID string) (*types.Schedule, error)
@@ -165,7 +161,7 @@ type ScheduleResolver interface {
 	Offices(ctx context.Context, obj *types.Schedule) ([]*types.Office, error)
 }
 type UserResolver interface {
-	AdminOf(ctx context.Context, obj *types.User) ([]*types.Office, error)
+	Memberships(ctx context.Context, obj *types.User) ([]*types.Office, error)
 }
 
 type ScheduleSaverResolver interface {
@@ -478,30 +474,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetSchedule(childComplexity, args["scheduleGUID"].(string), args["officeGUID"].(string)), true
 
-	case "Query.membership":
-		if e.complexity.Query.Membership == nil {
-			break
-		}
-
-		args, err := ec.field_Query_membership_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.Membership(childComplexity, args["email"].(string), args["officeGUID"].(string)), true
-
-	case "Query.memberships":
-		if e.complexity.Query.Memberships == nil {
-			break
-		}
-
-		args, err := ec.field_Query_memberships_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.Memberships(childComplexity, args["userGUID"].(*string), args["officeGUID"].(*string)), true
-
 	case "Query.office":
 		if e.complexity.Query.Office == nil {
 			break
@@ -587,13 +559,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Schedule.Start(childComplexity), true
 
-	case "User.adminOf":
-		if e.complexity.User.AdminOf == nil {
-			break
-		}
-
-		return e.complexity.User.AdminOf(childComplexity), true
-
 	case "User.email":
 		if e.complexity.User.Email == nil {
 			break
@@ -621,6 +586,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.LastName(childComplexity), true
+
+	case "User.memberships":
+		if e.complexity.User.Memberships == nil {
+			break
+		}
+
+		return e.complexity.User.Memberships(childComplexity), true
 
 	}
 	return 0, false
@@ -751,13 +723,7 @@ var sources = []*ast.Source{
 
 enum Role {
   ADMIN
-  USER
-}
-
-
-extend type Query {
-  membership(email: String!, officeGUID: String!): Membership
-  memberships(userGUID: String, officeGUID: String): [Membership!]
+  MEMBER
 }
 
 extend type Mutation {
@@ -844,7 +810,7 @@ extend type Mutation {
   firstName: String!
   lastName: String!
   email: String!
-  adminOf: [Office!]
+  memberships: [Office!]
 }
 
 input UserSaver {
@@ -1127,54 +1093,6 @@ func (ec *executionContext) field_Query_getSchedule_args(ctx context.Context, ra
 	if tmp, ok := rawArgs["officeGUID"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("officeGUID"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["officeGUID"] = arg1
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_membership_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["email"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["email"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["officeGUID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("officeGUID"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["officeGUID"] = arg1
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_memberships_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["userGUID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userGUID"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["userGUID"] = arg0
-	var arg1 *string
-	if tmp, ok := rawArgs["officeGUID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("officeGUID"))
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1822,8 +1740,8 @@ func (ec *executionContext) fieldContext_Membership_User(ctx context.Context, fi
 				return ec.fieldContext_User_lastName(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "adminOf":
-				return ec.fieldContext_User_adminOf(ctx, field)
+			case "memberships":
+				return ec.fieldContext_User_memberships(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -2022,8 +1940,8 @@ func (ec *executionContext) fieldContext_Mutation_Users(ctx context.Context, fie
 				return ec.fieldContext_User_lastName(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "adminOf":
-				return ec.fieldContext_User_adminOf(ctx, field)
+			case "memberships":
+				return ec.fieldContext_User_memberships(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -2651,8 +2569,8 @@ func (ec *executionContext) fieldContext_Office_admins(ctx context.Context, fiel
 				return ec.fieldContext_User_lastName(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "adminOf":
-				return ec.fieldContext_User_adminOf(ctx, field)
+			case "memberships":
+				return ec.fieldContext_User_memberships(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -2704,8 +2622,8 @@ func (ec *executionContext) fieldContext_Office_members(ctx context.Context, fie
 				return ec.fieldContext_User_lastName(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "adminOf":
-				return ec.fieldContext_User_adminOf(ctx, field)
+			case "memberships":
+				return ec.fieldContext_User_memberships(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -2878,8 +2796,8 @@ func (ec *executionContext) fieldContext_Query_users(ctx context.Context, field 
 				return ec.fieldContext_User_lastName(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "adminOf":
-				return ec.fieldContext_User_adminOf(ctx, field)
+			case "memberships":
+				return ec.fieldContext_User_memberships(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -2942,8 +2860,8 @@ func (ec *executionContext) fieldContext_Query_admins(ctx context.Context, field
 				return ec.fieldContext_User_lastName(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "adminOf":
-				return ec.fieldContext_User_adminOf(ctx, field)
+			case "memberships":
+				return ec.fieldContext_User_memberships(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -2956,130 +2874,6 @@ func (ec *executionContext) fieldContext_Query_admins(ctx context.Context, field
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_admins_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_membership(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_membership(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Membership(rctx, fc.Args["email"].(string), fc.Args["officeGUID"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*types.Membership)
-	fc.Result = res
-	return ec.marshalOMembership2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐMembership(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_membership(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "User":
-				return ec.fieldContext_Membership_User(ctx, field)
-			case "Office":
-				return ec.fieldContext_Membership_Office(ctx, field)
-			case "Role":
-				return ec.fieldContext_Membership_Role(ctx, field)
-			case "CreatedAt":
-				return ec.fieldContext_Membership_CreatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Membership", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_membership_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_memberships(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_memberships(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Memberships(rctx, fc.Args["userGUID"].(*string), fc.Args["officeGUID"].(*string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*types.Membership)
-	fc.Result = res
-	return ec.marshalOMembership2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐMembershipᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_memberships(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "User":
-				return ec.fieldContext_Membership_User(ctx, field)
-			case "Office":
-				return ec.fieldContext_Membership_Office(ctx, field)
-			case "Role":
-				return ec.fieldContext_Membership_Role(ctx, field)
-			case "CreatedAt":
-				return ec.fieldContext_Membership_CreatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Membership", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_memberships_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3755,8 +3549,8 @@ func (ec *executionContext) fieldContext_Schedule_coworkers(ctx context.Context,
 				return ec.fieldContext_User_lastName(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "adminOf":
-				return ec.fieldContext_User_adminOf(ctx, field)
+			case "memberships":
+				return ec.fieldContext_User_memberships(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -3999,8 +3793,8 @@ func (ec *executionContext) fieldContext_User_email(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _User_adminOf(ctx context.Context, field graphql.CollectedField, obj *types.User) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_User_adminOf(ctx, field)
+func (ec *executionContext) _User_memberships(ctx context.Context, field graphql.CollectedField, obj *types.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_memberships(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4013,7 +3807,7 @@ func (ec *executionContext) _User_adminOf(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().AdminOf(rctx, obj)
+		return ec.resolvers.User().Memberships(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4027,7 +3821,7 @@ func (ec *executionContext) _User_adminOf(ctx context.Context, field graphql.Col
 	return ec.marshalOOffice2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐOfficeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_adminOf(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_memberships(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -6713,44 +6507,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "membership":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_membership(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "memberships":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_memberships(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "office":
 			field := field
 
@@ -7045,7 +6801,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "adminOf":
+		case "memberships":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -7054,7 +6810,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._User_adminOf(ctx, field, obj)
+				res = ec._User_memberships(ctx, field, obj)
 				return res
 			}
 
@@ -7455,16 +7211,6 @@ func (ec *executionContext) marshalNEvent2ᚖgithubᚗcomᚋentegralᚋofficebud
 		return graphql.Null
 	}
 	return ec._Event(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNMembership2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐMembership(ctx context.Context, sel ast.SelectionSet, v *types.Membership) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Membership(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNOffice2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐOffice(ctx context.Context, sel ast.SelectionSet, v *types.Office) graphql.Marshaler {
@@ -7883,53 +7629,6 @@ func (ec *executionContext) marshalOEvent2ᚕᚖgithubᚗcomᚋentegralᚋoffice
 				defer wg.Done()
 			}
 			ret[i] = ec.marshalNEvent2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐEvent(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalOMembership2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐMembershipᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.Membership) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNMembership2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐMembership(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

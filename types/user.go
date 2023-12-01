@@ -18,6 +18,10 @@ type User struct {
 	// AdminOf   []*Office `json:"adminOf,omitempty"`
 }
 
+func (u *User) Type() string {
+	return "user"
+}
+
 // Keys returns the partition key and sort key for the given GSI.
 func (u *User) Keys(gsi int) (partitionKey, sortKey string) {
 	u.Pk = u.Email

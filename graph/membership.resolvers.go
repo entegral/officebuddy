@@ -6,34 +6,29 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/entegral/officebuddy/types"
+	"github.com/entegral/toolbox/clients"
 	"github.com/entegral/toolbox/helpers"
 )
 
 // User is the resolver for the User field.
 func (r *membershipResolver) User(ctx context.Context, obj *types.Membership) (*types.User, error) {
-	loaded, err := helpers.GetItem(ctx, obj.Entity0)
-	if err != nil {
-		return nil, err
-	}
-	if !loaded {
-		return nil, nil
+	if obj.Entity0.Email == "" {
+		loaded, err := obj.LoadEntity0(ctx, *clients.GetDefaultClient(ctx))
+		if err != nil {
+			return nil, err
+		}
+		if !loaded {
+			return nil, nil
+		}
 	}
 	return obj.Entity0, nil
 }
 
 // Office is the resolver for the Office field.
 func (r *membershipResolver) Office(ctx context.Context, obj *types.Membership) (*types.Office, error) {
-	loaded, err := helpers.GetItem(ctx, obj.Entity1)
-	if err != nil {
-		return nil, err
-	}
-	if !loaded {
-		return nil, nil
-	}
 	return obj.Entity1, nil
 }
 
@@ -44,12 +39,11 @@ func (r *membershipResolver) CreatedAt(ctx context.Context, obj *types.Membershi
 
 // PutMembership is the resolver for the putMembership field.
 func (r *mutationResolver) PutMembership(ctx context.Context, email string, officeGUID string, role types.Role) (*types.Membership, error) {
-	membership, err := types.NewMembership(email, officeGUID, role, nil)
+	membership, err := types.LoadMembership(email, officeGUID, role)
 	if err != nil {
 		return nil, err
 	}
-	skSuffix := "officeGUID:" + officeGUID
-	err = membership.Link(ctx, r.Clients, &skSuffix)
+	err = membership.Link(ctx, r.Clients)
 	if err != nil {
 		return nil, err
 	}
@@ -58,21 +52,30 @@ func (r *mutationResolver) PutMembership(ctx context.Context, email string, offi
 
 // DeleteMembership is the resolver for the deleteMembership field.
 func (r *mutationResolver) DeleteMembership(ctx context.Context, email string, officeGUID string) (bool, error) {
-	membership, err := types.NewMembership(email, officeGUID, types.RoleMember, nil)
+	membership, err := types.LoadMembership(email, officeGUID, types.RoleMember)
 	if err != nil {
 		return false, err
 	}
-	skSuffix := "officeGUID:" + officeGUID
-	err = membership.Unlink(ctx, r.Clients, &skSuffix)
+	err = membership.Unlink(ctx, r.Clients)
 	if err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
-// Membership is the resolver for the membership field.
+// Membership returns MembershipResolver implementation.
+func (r *Resolver) Membership() MembershipResolver { return &membershipResolver{r} }
+
+type membershipResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
 func (r *queryResolver) Membership(ctx context.Context, email string, officeGUID string) (*types.Membership, error) {
-	membership, err := types.NewMembership(email, officeGUID, types.RoleMember, nil)
+	membership, err := types.LoadMembership(email, officeGUID, types.RoleMember)
 	if err != nil {
 		return nil, err
 	}
@@ -85,13 +88,16 @@ func (r *queryResolver) Membership(ctx context.Context, email string, officeGUID
 	}
 	return membership, nil
 }
+func (r *queryResolver) Memberships(ctx context.Context, email *string, officeGUID *string) ([]*types.Membership, error) {
+	// if email == nil && officeGUID == nil {
+	// 	return nil, errors.New("email or officeGUID must be provided")
+	// }
+	// if email != nil && *email != "" {
+	// 	offices, err := dynamo.FindEntity1Links[*types.User, *types.Office](ctx, *clients.GetDefaultClient(ctx), &types.User{Email: *email})
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
 
-// Memberships is the resolver for the memberships field.
-func (r *queryResolver) Memberships(ctx context.Context, userGUID *string, officeGUID *string) ([]*types.Membership, error) {
-	panic(fmt.Errorf("not implemented: Memberships - memberships"))
+	// }
+	return nil, nil
 }
-
-// Membership returns MembershipResolver implementation.
-func (r *Resolver) Membership() MembershipResolver { return &membershipResolver{r} }
-
-type membershipResolver struct{ *Resolver }
