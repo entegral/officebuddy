@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/dgryski/trifles/uuid"
 	"github.com/entegral/toolbox/clients"
 	"github.com/entegral/toolbox/dynamo"
@@ -45,7 +46,20 @@ func (o Office) Events(ctx context.Context) ([]*Event, error) {
 
 // Members returns the members for the office
 func (o Office) Members(ctx context.Context) ([]*User, error) {
-	users, err := dynamo.FindEntity0Links[*User, *Office](ctx, *clients.GetDefaultClient(ctx), &o)
+	rows, err := dynamo.FindLinkRowsByEntity1[*User, *Office](ctx, *clients.GetDefaultClient(ctx), &o)
+	// users, err := dynamo.FindEntity0s[*User, *Office](ctx, *clients.GetDefaultClient(ctx), &o)
+	var memberships = []*Membership{}
+	err = attributevalue.UnmarshalListOfMaps(rows, &memberships)
+	var users = []*User{}
+	for _, m := range memberships {
+		loaded, err := m.LoadEntity0(ctx, *clients.GetDefaultClient(ctx))
+		if err != nil {
+			return nil, err
+		}
+		if loaded {
+			users = append(users, m.Entity0)
+		}
+	}
 	if err != nil {
 		return nil, err
 	}
