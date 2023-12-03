@@ -15,6 +15,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/entegral/officebuddy/graph/model"
 	"github.com/entegral/officebuddy/types"
+	types1 "github.com/entegral/toolbox/types"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -66,10 +67,11 @@ type ComplexityRoot struct {
 
 	Event struct {
 		Description func(childComplexity int) int
-		GUID        func(childComplexity int) int
-		Offices     func(childComplexity int) int
-		Schedule    func(childComplexity int) int
+		End         func(childComplexity int) int
+		Office      func(childComplexity int) int
+		Start       func(childComplexity int) int
 		Title       func(childComplexity int) int
+		User        func(childComplexity int) int
 	}
 
 	Membership struct {
@@ -81,9 +83,11 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CreateSchedule   func(childComplexity int, schedule types.ScheduleSaver) int
+		DeleteEvent      func(childComplexity int, userEmail string, officeGUID string) int
 		DeleteMembership func(childComplexity int, email string, officeGUID string) int
 		DeleteOffice     func(childComplexity int, officeGUID string) int
 		DeleteSchedule   func(childComplexity int, scheduleGUID string, officeGUID string) int
+		PutEvent         func(childComplexity int, userEmail string, officeGUID string, title string, description string, start types1.DateTime, end types1.DateTime) int
 		PutMembership    func(childComplexity int, email string, officeGUID string, role types.Role) int
 		PutOffice        func(childComplexity int, guid *string, name string, createdByEmail string, address types.AddressInput, description *string) int
 		Users            func(childComplexity int, input []*types.UserSaver) int
@@ -95,13 +99,12 @@ type ComplexityRoot struct {
 		Description func(childComplexity int) int
 		Events      func(childComplexity int) int
 		GUID        func(childComplexity int) int
-		Members     func(childComplexity int) int
+		Memberships func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Schedules   func(childComplexity int, scheduleGUID *string) int
 	}
 
 	Query struct {
-		Admins             func(childComplexity int, groupGUID string) int
 		GetOfficeSchedules func(childComplexity int, input types.ScheduleFinder) int
 		GetSchedule        func(childComplexity int, scheduleGUID string, officeGUID string) int
 		Office             func(childComplexity int, officeGUID string) int
@@ -124,18 +127,17 @@ type ComplexityRoot struct {
 		FirstName   func(childComplexity int) int
 		GUID        func(childComplexity int) int
 		LastName    func(childComplexity int) int
-		Memberships func(childComplexity int) int
+		Memberships func(childComplexity int, roles []types.Role) int
 	}
 }
 
 type MembershipResolver interface {
-	User(ctx context.Context, obj *types.Membership) (*types.User, error)
-	Office(ctx context.Context, obj *types.Membership) (*types.Office, error)
-
 	CreatedAt(ctx context.Context, obj *types.Membership) (string, error)
 }
 type MutationResolver interface {
 	Users(ctx context.Context, input []*types.UserSaver) ([]*types.User, error)
+	PutEvent(ctx context.Context, userEmail string, officeGUID string, title string, description string, start types1.DateTime, end types1.DateTime) (*types.Event, error)
+	DeleteEvent(ctx context.Context, userEmail string, officeGUID string) (bool, error)
 	PutMembership(ctx context.Context, email string, officeGUID string, role types.Role) (*types.Membership, error)
 	DeleteMembership(ctx context.Context, email string, officeGUID string) (bool, error)
 	PutOffice(ctx context.Context, guid *string, name string, createdByEmail string, address types.AddressInput, description *string) (*types.Office, error)
@@ -148,7 +150,6 @@ type OfficeResolver interface {
 }
 type QueryResolver interface {
 	Users(ctx context.Context, input []*types.UserFinder) ([]*types.User, error)
-	Admins(ctx context.Context, groupGUID string) ([]*types.User, error)
 	Office(ctx context.Context, officeGUID string) (*types.Office, error)
 	Offices(ctx context.Context, userGUID string) ([]*types.Office, error)
 	GetSchedule(ctx context.Context, scheduleGUID string, officeGUID string) (*types.Schedule, error)
@@ -161,7 +162,7 @@ type ScheduleResolver interface {
 	Offices(ctx context.Context, obj *types.Schedule) ([]*types.Office, error)
 }
 type UserResolver interface {
-	Memberships(ctx context.Context, obj *types.User) ([]*types.Office, error)
+	Memberships(ctx context.Context, obj *types.User, roles []types.Role) ([]*types.Membership, error)
 }
 
 type ScheduleSaverResolver interface {
@@ -237,26 +238,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Event.Description(childComplexity), true
 
-	case "Event.guid":
-		if e.complexity.Event.GUID == nil {
+	case "Event.end":
+		if e.complexity.Event.End == nil {
 			break
 		}
 
-		return e.complexity.Event.GUID(childComplexity), true
+		return e.complexity.Event.End(childComplexity), true
 
-	case "Event.offices":
-		if e.complexity.Event.Offices == nil {
+	case "Event.Office":
+		if e.complexity.Event.Office == nil {
 			break
 		}
 
-		return e.complexity.Event.Offices(childComplexity), true
+		return e.complexity.Event.Office(childComplexity), true
 
-	case "Event.schedule":
-		if e.complexity.Event.Schedule == nil {
+	case "Event.start":
+		if e.complexity.Event.Start == nil {
 			break
 		}
 
-		return e.complexity.Event.Schedule(childComplexity), true
+		return e.complexity.Event.Start(childComplexity), true
 
 	case "Event.title":
 		if e.complexity.Event.Title == nil {
@@ -264,6 +265,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Event.Title(childComplexity), true
+
+	case "Event.User":
+		if e.complexity.Event.User == nil {
+			break
+		}
+
+		return e.complexity.Event.User(childComplexity), true
 
 	case "Membership.CreatedAt":
 		if e.complexity.Membership.CreatedAt == nil {
@@ -305,6 +313,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateSchedule(childComplexity, args["schedule"].(types.ScheduleSaver)), true
 
+	case "Mutation.deleteEvent":
+		if e.complexity.Mutation.DeleteEvent == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteEvent_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteEvent(childComplexity, args["userEmail"].(string), args["officeGUID"].(string)), true
+
 	case "Mutation.deleteMembership":
 		if e.complexity.Mutation.DeleteMembership == nil {
 			break
@@ -340,6 +360,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteSchedule(childComplexity, args["scheduleGUID"].(string), args["officeGUID"].(string)), true
+
+	case "Mutation.putEvent":
+		if e.complexity.Mutation.PutEvent == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_putEvent_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.PutEvent(childComplexity, args["userEmail"].(string), args["officeGUID"].(string), args["title"].(string), args["description"].(string), args["start"].(types1.DateTime), args["end"].(types1.DateTime)), true
 
 	case "Mutation.putMembership":
 		if e.complexity.Mutation.PutMembership == nil {
@@ -384,7 +416,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Office.Address(childComplexity), true
 
-	case "Office.admins":
+	case "Office.Admins":
 		if e.complexity.Office.Admins == nil {
 			break
 		}
@@ -398,7 +430,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Office.Description(childComplexity), true
 
-	case "Office.events":
+	case "Office.Events":
 		if e.complexity.Office.Events == nil {
 			break
 		}
@@ -412,12 +444,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Office.GUID(childComplexity), true
 
-	case "Office.members":
-		if e.complexity.Office.Members == nil {
+	case "Office.Memberships":
+		if e.complexity.Office.Memberships == nil {
 			break
 		}
 
-		return e.complexity.Office.Members(childComplexity), true
+		return e.complexity.Office.Memberships(childComplexity), true
 
 	case "Office.name":
 		if e.complexity.Office.Name == nil {
@@ -426,29 +458,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Office.Name(childComplexity), true
 
-	case "Office.schedules":
+	case "Office.Schedules":
 		if e.complexity.Office.Schedules == nil {
 			break
 		}
 
-		args, err := ec.field_Office_schedules_args(context.TODO(), rawArgs)
+		args, err := ec.field_Office_Schedules_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
 		return e.complexity.Office.Schedules(childComplexity, args["scheduleGUID"].(*string)), true
-
-	case "Query.admins":
-		if e.complexity.Query.Admins == nil {
-			break
-		}
-
-		args, err := ec.field_Query_admins_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.Admins(childComplexity, args["groupGUID"].(string)), true
 
 	case "Query.getOfficeSchedules":
 		if e.complexity.Query.GetOfficeSchedules == nil {
@@ -592,7 +612,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.User.Memberships(childComplexity), true
+		args, err := ec.field_User_memberships_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.User.Memberships(childComplexity, args["roles"].([]types.Role)), true
 
 	}
 	return 0, false
@@ -704,15 +729,32 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
+	{Name: "../types/datetime.graphql", Input: `scalar DateTime`, BuiltIn: false},
 	{Name: "../types/dummy.graphql", Input: `type Dummy {
   name: String
 }`, BuiltIn: false},
 	{Name: "../types/event.graphql", Input: `type Event {
-  guid: String!
   title: String!
-  schedule: Schedule!
   description: String!
-  offices: [Office!]
+  start: DateTime!
+  end: DateTime!
+  Office: Office!
+  User: User!
+}
+
+extend type Mutation {
+  putEvent(
+    userEmail: String!,
+    officeGUID: String!,
+    title: String!,
+    description: String!,
+    start: DateTime!,
+    end: DateTime!,
+  ): Event!
+  deleteEvent(
+    userEmail: String!,
+    officeGUID: String!,
+  ): Boolean!
 }`, BuiltIn: false},
 	{Name: "../types/membership.graphql", Input: `type Membership {
   User: User
@@ -736,10 +778,10 @@ type Office {
   name: String!
   description: String
   address: Address
-  admins: [User!]
-  members: [User!]
-  events: [Event!]
-  schedules(scheduleGUID: String): [Schedule!]
+  Admins: [User!]
+  Memberships: [Membership!]
+  Events: [Event!]
+  Schedules(scheduleGUID: String): [Schedule!]
 }
 
 type Address {
@@ -810,7 +852,7 @@ extend type Mutation {
   firstName: String!
   lastName: String!
   email: String!
-  memberships: [Office!]
+  memberships(roles: [Role!]): [Membership!]
 }
 
 input UserSaver {
@@ -827,7 +869,6 @@ input UserFinder {
 
 type Query {
   users(input: [UserFinder!]!): [User!]
-  admins(groupGUID: String!): [User!]
 }
 
 type Mutation {
@@ -867,6 +908,30 @@ func (ec *executionContext) field_Mutation_createSchedule_args(ctx context.Conte
 		}
 	}
 	args["schedule"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteEvent_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["userEmail"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userEmail"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userEmail"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["officeGUID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("officeGUID"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["officeGUID"] = arg1
 	return args, nil
 }
 
@@ -930,6 +995,66 @@ func (ec *executionContext) field_Mutation_deleteSchedule_args(ctx context.Conte
 		}
 	}
 	args["officeGUID"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_putEvent_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["userEmail"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userEmail"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userEmail"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["officeGUID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("officeGUID"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["officeGUID"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["title"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["title"] = arg2
+	var arg3 string
+	if tmp, ok := rawArgs["description"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+		arg3, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["description"] = arg3
+	var arg4 types1.DateTime
+	if tmp, ok := rawArgs["start"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("start"))
+		arg4, err = ec.unmarshalNDateTime2githubᚗcomᚋentegralᚋtoolboxᚋtypesᚐDateTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["start"] = arg4
+	var arg5 types1.DateTime
+	if tmp, ok := rawArgs["end"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("end"))
+		arg5, err = ec.unmarshalNDateTime2githubᚗcomᚋentegralᚋtoolboxᚋtypesᚐDateTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["end"] = arg5
 	return args, nil
 }
 
@@ -1017,7 +1142,7 @@ func (ec *executionContext) field_Mutation_putOffice_args(ctx context.Context, r
 	return args, nil
 }
 
-func (ec *executionContext) field_Office_schedules_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Office_Schedules_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *string
@@ -1044,21 +1169,6 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_admins_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["groupGUID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("groupGUID"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["groupGUID"] = arg0
 	return args, nil
 }
 
@@ -1143,6 +1253,21 @@ func (ec *executionContext) field_Query_users_args(ctx context.Context, rawArgs 
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_User_memberships_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []types.Role
+	if tmp, ok := rawArgs["roles"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roles"))
+		arg0, err = ec.unmarshalORole2ᚕgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐRoleᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["roles"] = arg0
 	return args, nil
 }
 
@@ -1445,50 +1570,6 @@ func (ec *executionContext) fieldContext_Dummy_name(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Event_guid(ctx context.Context, field graphql.CollectedField, obj *types.Event) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Event_guid(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.GUID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Event_guid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Event",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Event_title(ctx context.Context, field graphql.CollectedField, obj *types.Event) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Event_title(ctx, field)
 	if err != nil {
@@ -1528,66 +1609,6 @@ func (ec *executionContext) fieldContext_Event_title(ctx context.Context, field 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Event_schedule(ctx context.Context, field graphql.CollectedField, obj *types.Event) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Event_schedule(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Schedule, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.Schedule)
-	fc.Result = res
-	return ec.marshalNSchedule2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐSchedule(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Event_schedule(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Event",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "scheduleGUID":
-				return ec.fieldContext_Schedule_scheduleGUID(ctx, field)
-			case "officeGUID":
-				return ec.fieldContext_Schedule_officeGUID(ctx, field)
-			case "start":
-				return ec.fieldContext_Schedule_start(ctx, field)
-			case "end":
-				return ec.fieldContext_Schedule_end(ctx, field)
-			case "active":
-				return ec.fieldContext_Schedule_active(ctx, field)
-			case "coworkers":
-				return ec.fieldContext_Schedule_coworkers(ctx, field)
-			case "offices":
-				return ec.fieldContext_Schedule_offices(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Schedule", field.Name)
 		},
 	}
 	return fc, nil
@@ -1637,8 +1658,8 @@ func (ec *executionContext) fieldContext_Event_description(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Event_offices(ctx context.Context, field graphql.CollectedField, obj *types.Event) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Event_offices(ctx, field)
+func (ec *executionContext) _Event_start(ctx context.Context, field graphql.CollectedField, obj *types.Event) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Event_start(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1651,25 +1672,116 @@ func (ec *executionContext) _Event_offices(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Offices, nil
+		return obj.Start, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*types.Office)
+	res := resTmp.(types1.DateTime)
 	fc.Result = res
-	return ec.marshalOOffice2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐOfficeᚄ(ctx, field.Selections, res)
+	return ec.marshalNDateTime2githubᚗcomᚋentegralᚋtoolboxᚋtypesᚐDateTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Event_offices(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Event_start(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Event",
 		Field:      field,
 		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Event_end(ctx context.Context, field graphql.CollectedField, obj *types.Event) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Event_end(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.End, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(types1.DateTime)
+	fc.Result = res
+	return ec.marshalNDateTime2githubᚗcomᚋentegralᚋtoolboxᚋtypesᚐDateTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Event_end(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Event",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Event_Office(ctx context.Context, field graphql.CollectedField, obj *types.Event) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Event_Office(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Office(ctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Office)
+	fc.Result = res
+	return ec.marshalNOffice2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐOffice(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Event_Office(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Event",
+		Field:      field,
+		IsMethod:   true,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
@@ -1681,16 +1793,72 @@ func (ec *executionContext) fieldContext_Event_offices(ctx context.Context, fiel
 				return ec.fieldContext_Office_description(ctx, field)
 			case "address":
 				return ec.fieldContext_Office_address(ctx, field)
-			case "admins":
-				return ec.fieldContext_Office_admins(ctx, field)
-			case "members":
-				return ec.fieldContext_Office_members(ctx, field)
-			case "events":
-				return ec.fieldContext_Office_events(ctx, field)
-			case "schedules":
-				return ec.fieldContext_Office_schedules(ctx, field)
+			case "Admins":
+				return ec.fieldContext_Office_Admins(ctx, field)
+			case "Memberships":
+				return ec.fieldContext_Office_Memberships(ctx, field)
+			case "Events":
+				return ec.fieldContext_Office_Events(ctx, field)
+			case "Schedules":
+				return ec.fieldContext_Office_Schedules(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Office", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Event_User(ctx context.Context, field graphql.CollectedField, obj *types.Event) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Event_User(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User(ctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Event_User(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Event",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "guid":
+				return ec.fieldContext_User_guid(ctx, field)
+			case "firstName":
+				return ec.fieldContext_User_firstName(ctx, field)
+			case "lastName":
+				return ec.fieldContext_User_lastName(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "memberships":
+				return ec.fieldContext_User_memberships(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
 	}
 	return fc, nil
@@ -1710,7 +1878,7 @@ func (ec *executionContext) _Membership_User(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Membership().User(rctx, obj)
+		return obj.User(ctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1729,7 +1897,7 @@ func (ec *executionContext) fieldContext_Membership_User(ctx context.Context, fi
 		Object:     "Membership",
 		Field:      field,
 		IsMethod:   true,
-		IsResolver: true,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "guid":
@@ -1763,7 +1931,7 @@ func (ec *executionContext) _Membership_Office(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Membership().Office(rctx, obj)
+		return obj.Office(ctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1782,7 +1950,7 @@ func (ec *executionContext) fieldContext_Membership_Office(ctx context.Context, 
 		Object:     "Membership",
 		Field:      field,
 		IsMethod:   true,
-		IsResolver: true,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "guid":
@@ -1793,14 +1961,14 @@ func (ec *executionContext) fieldContext_Membership_Office(ctx context.Context, 
 				return ec.fieldContext_Office_description(ctx, field)
 			case "address":
 				return ec.fieldContext_Office_address(ctx, field)
-			case "admins":
-				return ec.fieldContext_Office_admins(ctx, field)
-			case "members":
-				return ec.fieldContext_Office_members(ctx, field)
-			case "events":
-				return ec.fieldContext_Office_events(ctx, field)
-			case "schedules":
-				return ec.fieldContext_Office_schedules(ctx, field)
+			case "Admins":
+				return ec.fieldContext_Office_Admins(ctx, field)
+			case "Memberships":
+				return ec.fieldContext_Office_Memberships(ctx, field)
+			case "Events":
+				return ec.fieldContext_Office_Events(ctx, field)
+			case "Schedules":
+				return ec.fieldContext_Office_Schedules(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Office", field.Name)
 		},
@@ -1954,6 +2122,130 @@ func (ec *executionContext) fieldContext_Mutation_Users(ctx context.Context, fie
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_Users_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_putEvent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_putEvent(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().PutEvent(rctx, fc.Args["userEmail"].(string), fc.Args["officeGUID"].(string), fc.Args["title"].(string), fc.Args["description"].(string), fc.Args["start"].(types1.DateTime), fc.Args["end"].(types1.DateTime))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Event)
+	fc.Result = res
+	return ec.marshalNEvent2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐEvent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_putEvent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "title":
+				return ec.fieldContext_Event_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Event_description(ctx, field)
+			case "start":
+				return ec.fieldContext_Event_start(ctx, field)
+			case "end":
+				return ec.fieldContext_Event_end(ctx, field)
+			case "Office":
+				return ec.fieldContext_Event_Office(ctx, field)
+			case "User":
+				return ec.fieldContext_Event_User(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_putEvent_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteEvent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteEvent(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteEvent(rctx, fc.Args["userEmail"].(string), fc.Args["officeGUID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteEvent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteEvent_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2121,14 +2413,14 @@ func (ec *executionContext) fieldContext_Mutation_putOffice(ctx context.Context,
 				return ec.fieldContext_Office_description(ctx, field)
 			case "address":
 				return ec.fieldContext_Office_address(ctx, field)
-			case "admins":
-				return ec.fieldContext_Office_admins(ctx, field)
-			case "members":
-				return ec.fieldContext_Office_members(ctx, field)
-			case "events":
-				return ec.fieldContext_Office_events(ctx, field)
-			case "schedules":
-				return ec.fieldContext_Office_schedules(ctx, field)
+			case "Admins":
+				return ec.fieldContext_Office_Admins(ctx, field)
+			case "Memberships":
+				return ec.fieldContext_Office_Memberships(ctx, field)
+			case "Events":
+				return ec.fieldContext_Office_Events(ctx, field)
+			case "Schedules":
+				return ec.fieldContext_Office_Schedules(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Office", field.Name)
 		},
@@ -2191,14 +2483,14 @@ func (ec *executionContext) fieldContext_Mutation_deleteOffice(ctx context.Conte
 				return ec.fieldContext_Office_description(ctx, field)
 			case "address":
 				return ec.fieldContext_Office_address(ctx, field)
-			case "admins":
-				return ec.fieldContext_Office_admins(ctx, field)
-			case "members":
-				return ec.fieldContext_Office_members(ctx, field)
-			case "events":
-				return ec.fieldContext_Office_events(ctx, field)
-			case "schedules":
-				return ec.fieldContext_Office_schedules(ctx, field)
+			case "Admins":
+				return ec.fieldContext_Office_Admins(ctx, field)
+			case "Memberships":
+				return ec.fieldContext_Office_Memberships(ctx, field)
+			case "Events":
+				return ec.fieldContext_Office_Events(ctx, field)
+			case "Schedules":
+				return ec.fieldContext_Office_Schedules(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Office", field.Name)
 		},
@@ -2525,8 +2817,8 @@ func (ec *executionContext) fieldContext_Office_address(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Office_admins(ctx context.Context, field graphql.CollectedField, obj *types.Office) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Office_admins(ctx, field)
+func (ec *executionContext) _Office_Admins(ctx context.Context, field graphql.CollectedField, obj *types.Office) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Office_Admins(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2553,7 +2845,7 @@ func (ec *executionContext) _Office_admins(ctx context.Context, field graphql.Co
 	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUserᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Office_admins(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Office_Admins(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Office",
 		Field:      field,
@@ -2578,8 +2870,8 @@ func (ec *executionContext) fieldContext_Office_admins(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Office_members(ctx context.Context, field graphql.CollectedField, obj *types.Office) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Office_members(ctx, field)
+func (ec *executionContext) _Office_Memberships(ctx context.Context, field graphql.CollectedField, obj *types.Office) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Office_Memberships(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2592,7 +2884,7 @@ func (ec *executionContext) _Office_members(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Members(ctx)
+		return obj.Memberships(ctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2601,12 +2893,12 @@ func (ec *executionContext) _Office_members(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*types.User)
+	res := resTmp.([]*types.Membership)
 	fc.Result = res
-	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUserᚄ(ctx, field.Selections, res)
+	return ec.marshalOMembership2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐMembershipᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Office_members(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Office_Memberships(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Office",
 		Field:      field,
@@ -2614,25 +2906,23 @@ func (ec *executionContext) fieldContext_Office_members(ctx context.Context, fie
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "guid":
-				return ec.fieldContext_User_guid(ctx, field)
-			case "firstName":
-				return ec.fieldContext_User_firstName(ctx, field)
-			case "lastName":
-				return ec.fieldContext_User_lastName(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "memberships":
-				return ec.fieldContext_User_memberships(ctx, field)
+			case "User":
+				return ec.fieldContext_Membership_User(ctx, field)
+			case "Office":
+				return ec.fieldContext_Membership_Office(ctx, field)
+			case "Role":
+				return ec.fieldContext_Membership_Role(ctx, field)
+			case "CreatedAt":
+				return ec.fieldContext_Membership_CreatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Membership", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Office_events(ctx context.Context, field graphql.CollectedField, obj *types.Office) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Office_events(ctx, field)
+func (ec *executionContext) _Office_Events(ctx context.Context, field graphql.CollectedField, obj *types.Office) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Office_Events(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2659,7 +2949,7 @@ func (ec *executionContext) _Office_events(ctx context.Context, field graphql.Co
 	return ec.marshalOEvent2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐEventᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Office_events(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Office_Events(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Office",
 		Field:      field,
@@ -2667,16 +2957,18 @@ func (ec *executionContext) fieldContext_Office_events(ctx context.Context, fiel
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "guid":
-				return ec.fieldContext_Event_guid(ctx, field)
 			case "title":
 				return ec.fieldContext_Event_title(ctx, field)
-			case "schedule":
-				return ec.fieldContext_Event_schedule(ctx, field)
 			case "description":
 				return ec.fieldContext_Event_description(ctx, field)
-			case "offices":
-				return ec.fieldContext_Event_offices(ctx, field)
+			case "start":
+				return ec.fieldContext_Event_start(ctx, field)
+			case "end":
+				return ec.fieldContext_Event_end(ctx, field)
+			case "Office":
+				return ec.fieldContext_Event_Office(ctx, field)
+			case "User":
+				return ec.fieldContext_Event_User(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -2684,8 +2976,8 @@ func (ec *executionContext) fieldContext_Office_events(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Office_schedules(ctx context.Context, field graphql.CollectedField, obj *types.Office) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Office_schedules(ctx, field)
+func (ec *executionContext) _Office_Schedules(ctx context.Context, field graphql.CollectedField, obj *types.Office) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Office_Schedules(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2712,7 +3004,7 @@ func (ec *executionContext) _Office_schedules(ctx context.Context, field graphql
 	return ec.marshalOSchedule2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐScheduleᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Office_schedules(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Office_Schedules(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Office",
 		Field:      field,
@@ -2745,7 +3037,7 @@ func (ec *executionContext) fieldContext_Office_schedules(ctx context.Context, f
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Office_schedules_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Office_Schedules_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2816,70 +3108,6 @@ func (ec *executionContext) fieldContext_Query_users(ctx context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_admins(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_admins(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Admins(rctx, fc.Args["groupGUID"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*types.User)
-	fc.Result = res
-	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUserᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_admins(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "guid":
-				return ec.fieldContext_User_guid(ctx, field)
-			case "firstName":
-				return ec.fieldContext_User_firstName(ctx, field)
-			case "lastName":
-				return ec.fieldContext_User_lastName(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "memberships":
-				return ec.fieldContext_User_memberships(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_admins_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Query_office(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_office(ctx, field)
 	if err != nil {
@@ -2924,14 +3152,14 @@ func (ec *executionContext) fieldContext_Query_office(ctx context.Context, field
 				return ec.fieldContext_Office_description(ctx, field)
 			case "address":
 				return ec.fieldContext_Office_address(ctx, field)
-			case "admins":
-				return ec.fieldContext_Office_admins(ctx, field)
-			case "members":
-				return ec.fieldContext_Office_members(ctx, field)
-			case "events":
-				return ec.fieldContext_Office_events(ctx, field)
-			case "schedules":
-				return ec.fieldContext_Office_schedules(ctx, field)
+			case "Admins":
+				return ec.fieldContext_Office_Admins(ctx, field)
+			case "Memberships":
+				return ec.fieldContext_Office_Memberships(ctx, field)
+			case "Events":
+				return ec.fieldContext_Office_Events(ctx, field)
+			case "Schedules":
+				return ec.fieldContext_Office_Schedules(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Office", field.Name)
 		},
@@ -2994,14 +3222,14 @@ func (ec *executionContext) fieldContext_Query_offices(ctx context.Context, fiel
 				return ec.fieldContext_Office_description(ctx, field)
 			case "address":
 				return ec.fieldContext_Office_address(ctx, field)
-			case "admins":
-				return ec.fieldContext_Office_admins(ctx, field)
-			case "members":
-				return ec.fieldContext_Office_members(ctx, field)
-			case "events":
-				return ec.fieldContext_Office_events(ctx, field)
-			case "schedules":
-				return ec.fieldContext_Office_schedules(ctx, field)
+			case "Admins":
+				return ec.fieldContext_Office_Admins(ctx, field)
+			case "Memberships":
+				return ec.fieldContext_Office_Memberships(ctx, field)
+			case "Events":
+				return ec.fieldContext_Office_Events(ctx, field)
+			case "Schedules":
+				return ec.fieldContext_Office_Schedules(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Office", field.Name)
 		},
@@ -3602,14 +3830,14 @@ func (ec *executionContext) fieldContext_Schedule_offices(ctx context.Context, f
 				return ec.fieldContext_Office_description(ctx, field)
 			case "address":
 				return ec.fieldContext_Office_address(ctx, field)
-			case "admins":
-				return ec.fieldContext_Office_admins(ctx, field)
-			case "members":
-				return ec.fieldContext_Office_members(ctx, field)
-			case "events":
-				return ec.fieldContext_Office_events(ctx, field)
-			case "schedules":
-				return ec.fieldContext_Office_schedules(ctx, field)
+			case "Admins":
+				return ec.fieldContext_Office_Admins(ctx, field)
+			case "Memberships":
+				return ec.fieldContext_Office_Memberships(ctx, field)
+			case "Events":
+				return ec.fieldContext_Office_Events(ctx, field)
+			case "Schedules":
+				return ec.fieldContext_Office_Schedules(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Office", field.Name)
 		},
@@ -3807,7 +4035,7 @@ func (ec *executionContext) _User_memberships(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().Memberships(rctx, obj)
+		return ec.resolvers.User().Memberships(rctx, obj, fc.Args["roles"].([]types.Role))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3816,9 +4044,9 @@ func (ec *executionContext) _User_memberships(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*types.Office)
+	res := resTmp.([]*types.Membership)
 	fc.Result = res
-	return ec.marshalOOffice2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐOfficeᚄ(ctx, field.Selections, res)
+	return ec.marshalOMembership2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐMembershipᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_memberships(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3829,25 +4057,28 @@ func (ec *executionContext) fieldContext_User_memberships(ctx context.Context, f
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "guid":
-				return ec.fieldContext_Office_guid(ctx, field)
-			case "name":
-				return ec.fieldContext_Office_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Office_description(ctx, field)
-			case "address":
-				return ec.fieldContext_Office_address(ctx, field)
-			case "admins":
-				return ec.fieldContext_Office_admins(ctx, field)
-			case "members":
-				return ec.fieldContext_Office_members(ctx, field)
-			case "events":
-				return ec.fieldContext_Office_events(ctx, field)
-			case "schedules":
-				return ec.fieldContext_Office_schedules(ctx, field)
+			case "User":
+				return ec.fieldContext_Membership_User(ctx, field)
+			case "Office":
+				return ec.fieldContext_Membership_Office(ctx, field)
+			case "Role":
+				return ec.fieldContext_Membership_Role(ctx, field)
+			case "CreatedAt":
+				return ec.fieldContext_Membership_CreatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Office", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Membership", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_User_memberships_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -6005,28 +6236,98 @@ func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, ob
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Event")
-		case "guid":
-			out.Values[i] = ec._Event_guid(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "title":
 			out.Values[i] = ec._Event_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "schedule":
-			out.Values[i] = ec._Event_schedule(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "description":
 			out.Values[i] = ec._Event_description(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "offices":
-			out.Values[i] = ec._Event_offices(ctx, field, obj)
+		case "start":
+			out.Values[i] = ec._Event_start(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "end":
+			out.Values[i] = ec._Event_end(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "Office":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Event_Office(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "User":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Event_User(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6214,6 +6515,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_Users(ctx, field)
 			})
+		case "putEvent":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_putEvent(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteEvent":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteEvent(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "putMembership":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_putMembership(ctx, field)
@@ -6295,7 +6610,7 @@ func (ec *executionContext) _Office(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec._Office_description(ctx, field, obj)
 		case "address":
 			out.Values[i] = ec._Office_address(ctx, field, obj)
-		case "admins":
+		case "Admins":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -6304,7 +6619,7 @@ func (ec *executionContext) _Office(ctx context.Context, sel ast.SelectionSet, o
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Office_admins(ctx, field, obj)
+				res = ec._Office_Admins(ctx, field, obj)
 				return res
 			}
 
@@ -6328,7 +6643,7 @@ func (ec *executionContext) _Office(ctx context.Context, sel ast.SelectionSet, o
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "members":
+		case "Memberships":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -6337,7 +6652,7 @@ func (ec *executionContext) _Office(ctx context.Context, sel ast.SelectionSet, o
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Office_members(ctx, field, obj)
+				res = ec._Office_Memberships(ctx, field, obj)
 				return res
 			}
 
@@ -6361,7 +6676,7 @@ func (ec *executionContext) _Office(ctx context.Context, sel ast.SelectionSet, o
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "events":
+		case "Events":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -6370,7 +6685,7 @@ func (ec *executionContext) _Office(ctx context.Context, sel ast.SelectionSet, o
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Office_events(ctx, field, obj)
+				res = ec._Office_Events(ctx, field, obj)
 				return res
 			}
 
@@ -6394,7 +6709,7 @@ func (ec *executionContext) _Office(ctx context.Context, sel ast.SelectionSet, o
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "schedules":
+		case "Schedules":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -6403,7 +6718,7 @@ func (ec *executionContext) _Office(ctx context.Context, sel ast.SelectionSet, o
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Office_schedules(ctx, field, obj)
+				res = ec._Office_Schedules(ctx, field, obj)
 				return res
 			}
 
@@ -6479,25 +6794,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_users(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "admins":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_admins(ctx, field)
 				return res
 			}
 
@@ -7203,6 +7499,20 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNDateTime2githubᚗcomᚋentegralᚋtoolboxᚋtypesᚐDateTime(ctx context.Context, v interface{}) (types1.DateTime, error) {
+	var res types1.DateTime
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDateTime2githubᚗcomᚋentegralᚋtoolboxᚋtypesᚐDateTime(ctx context.Context, sel ast.SelectionSet, v types1.DateTime) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNEvent2githubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐEvent(ctx context.Context, sel ast.SelectionSet, v types.Event) graphql.Marshaler {
+	return ec._Event(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNEvent2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐEvent(ctx context.Context, sel ast.SelectionSet, v *types.Event) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -7211,6 +7521,16 @@ func (ec *executionContext) marshalNEvent2ᚖgithubᚗcomᚋentegralᚋofficebud
 		return graphql.Null
 	}
 	return ec._Event(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMembership2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐMembership(ctx context.Context, sel ast.SelectionSet, v *types.Membership) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Membership(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNOffice2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐOffice(ctx context.Context, sel ast.SelectionSet, v *types.Office) graphql.Marshaler {
@@ -7648,6 +7968,53 @@ func (ec *executionContext) marshalOEvent2ᚕᚖgithubᚗcomᚋentegralᚋoffice
 	return ret
 }
 
+func (ec *executionContext) marshalOMembership2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐMembershipᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.Membership) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNMembership2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐMembership(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalOMembership2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐMembership(ctx context.Context, sel ast.SelectionSet, v *types.Membership) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -7707,6 +8074,73 @@ func (ec *executionContext) marshalOOffice2ᚖgithubᚗcomᚋentegralᚋofficebu
 		return graphql.Null
 	}
 	return ec._Office(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalORole2ᚕgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐRoleᚄ(ctx context.Context, v interface{}) ([]types.Role, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]types.Role, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNRole2githubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐRole(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalORole2ᚕgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐRoleᚄ(ctx context.Context, sel ast.SelectionSet, v []types.Role) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRole2githubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐRole(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalOSchedule2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐScheduleᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.Schedule) graphql.Marshaler {

@@ -69,6 +69,30 @@ func NewUser(ctx context.Context, guid, email, fname, lname string) (*User, erro
 	}, nil
 }
 
+// AdminOf returns the offices the user is an admin of.
 func (u *User) AdminOf(ctx context.Context, clients clients.Client) ([]*Office, error) {
-	return nil, nil
+	memberships, err := u.Memberships(ctx, clients)
+	if err != nil {
+		return nil, err
+	}
+	offices := []*Office{}
+	for _, m := range memberships {
+		if m.Role == RoleAdmin {
+			office, err := m.Office(ctx)
+			if err != nil {
+				return nil, err
+			}
+			offices = append(offices, office)
+		}
+	}
+	return offices, nil
+}
+
+// Memberships returns the office memberships for the user.
+func (u *User) Memberships(ctx context.Context, clients clients.Client) ([]*Membership, error) {
+	memberships, err := dynamo.FindTypesByEntity0[*User, *Office, *Membership](ctx, clients, u)
+	if err != nil {
+		return nil, err
+	}
+	return memberships, nil
 }

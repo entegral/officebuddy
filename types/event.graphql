@@ -1,7 +1,23 @@
 type Event {
-  guid: String!
   title: String!
-  schedule: Schedule!
   description: String!
-  offices: [Office!]
+  start: DateTime!
+  end: DateTime!
+  Office: Office!
+  User: User!
+}
+
+extend type Mutation {
+  putEvent(
+    userEmail: String!,
+    officeGUID: String!,
+    title: String!,
+    description: String!,
+    start: DateTime!,
+    end: DateTime!,
+  ): Event!
+  deleteEvent(
+    userEmail: String!,
+    officeGUID: String!,
+  ): Boolean!
 }

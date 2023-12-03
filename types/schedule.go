@@ -11,15 +11,25 @@ import (
 	"github.com/entegral/toolbox/helpers"
 )
 
+// KeyHolder is a variant of a user that holds a key to an office.
+type KeyHolder struct {
+	User
+	KeyID  string `json:"keyID"`
+	RoomID string `json:"roomID"`
+}
+
+func (k KeyHolder) Type() string {
+	return "keyholder"
+}
+
 // Schedule is a type for defining a schedule for a given office.
 type Schedule struct {
-	dynamo.Row
-	ScheduleGUID string    `json:"scheduleGUID"`
-	OfficeGUID   string    `json:"officeGUID"`
-	Start        time.Time `json:"start"`
-	End          time.Time `json:"end"`
-	Active       bool      `json:"active"`
-	Coworkers    []*User   `json:"coworkers,omitempty"`
+	dynamo.DiLink[*Office, *KeyHolder]
+	ScheduleGUID string      `json:"scheduleGUID"`
+	OfficeGUID   string      `json:"officeGUID"`
+	Days         []time.Time `json:"days"`
+	Active       bool        `json:"active"`
+	Coworkers    []*User     `json:"coworkers,omitempty"`
 }
 
 func (s *Schedule) Type() string {

@@ -10,28 +10,8 @@ import (
 	"time"
 
 	"github.com/entegral/officebuddy/types"
-	"github.com/entegral/toolbox/clients"
 	"github.com/entegral/toolbox/dynamo"
 )
-
-// User is the resolver for the User field.
-func (r *membershipResolver) User(ctx context.Context, obj *types.Membership) (*types.User, error) {
-	if obj.Entity0.Email == "" {
-		loaded, err := obj.LoadEntity0(ctx, *clients.GetDefaultClient(ctx))
-		if err != nil {
-			return nil, err
-		}
-		if !loaded {
-			return nil, nil
-		}
-	}
-	return obj.Entity0, nil
-}
-
-// Office is the resolver for the Office field.
-func (r *membershipResolver) Office(ctx context.Context, obj *types.Membership) (*types.Office, error) {
-	return obj.Entity1, nil
-}
 
 // CreatedAt is the resolver for the CreatedAt field.
 func (r *membershipResolver) CreatedAt(ctx context.Context, obj *types.Membership) (string, error) {

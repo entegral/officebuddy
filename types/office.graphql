@@ -4,10 +4,10 @@ type Office {
   name: String!
   description: String
   address: Address
-  admins: [User!]
-  members: [User!]
-  events: [Event!]
-  schedules(scheduleGUID: String): [Schedule!]
+  Admins: [User!]
+  Memberships: [Membership!]
+  Events: [Event!]
+  Schedules(scheduleGUID: String): [Schedule!]
 }
 
 type Address {

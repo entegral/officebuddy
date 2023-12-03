@@ -7,6 +7,8 @@ package graph
 import (
 	"context"
 	"fmt"
+	"sort"
+	"time"
 
 	"github.com/entegral/officebuddy/types"
 	"github.com/entegral/toolbox/helpers"
@@ -56,12 +58,18 @@ func (r *queryResolver) GetOfficeSchedules(ctx context.Context, input types.Sche
 
 // Start is the resolver for the start field.
 func (r *scheduleResolver) Start(ctx context.Context, obj *types.Schedule) (string, error) {
-	return obj.Start.String(), nil
+	sort.Slice(obj.Days, func(i, j int) bool {
+		return obj.Days[i].Before(obj.Days[j])
+	})
+	return obj.Days[0].Format(time.RFC3339), nil
 }
 
 // End is the resolver for the end field.
 func (r *scheduleResolver) End(ctx context.Context, obj *types.Schedule) (string, error) {
-	return obj.End.String(), nil
+	sort.Slice(obj.Days, func(i, j int) bool {
+		return obj.Days[i].Before(obj.Days[j])
+	})
+	return obj.Days[len(obj.Days)-1].Format(time.RFC3339), nil
 }
 
 // Offices is the resolver for the offices field.

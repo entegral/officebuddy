@@ -44,6 +44,30 @@ func (e NewMembershipError) Error() string {
 	return string(e.message)
 }
 
+// User loads the user for the membership.
+func (m *Membership) User(ctx context.Context) (*User, error) {
+	loaded, err := m.LoadEntity0(ctx, *clients.GetDefaultClient(ctx))
+	if err != nil {
+		return nil, err
+	}
+	if !loaded {
+		return nil, NewMembershipError{ErrUserNotFound}
+	}
+	return m.Entity0, nil
+}
+
+// Office loads the office for the membership.
+func (m *Membership) Office(ctx context.Context) (*Office, error) {
+	loaded, err := m.LoadEntity1(ctx, *clients.GetDefaultClient(ctx))
+	if err != nil {
+		return nil, err
+	}
+	if !loaded {
+		return nil, NewMembershipError{ErrorOfficeNotFound}
+	}
+	return m.Entity1, nil
+}
+
 // LoadMembership simplifies the loading of a membership from dynamo.
 // If either the user or office is not found, an error is returned.
 func LoadMembership(email, officeGUID string, role Role) (*Membership, error) {

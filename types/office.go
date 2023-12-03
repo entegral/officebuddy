@@ -43,23 +43,9 @@ func (o Office) Events(ctx context.Context) ([]*Event, error) {
 	return nil, nil
 }
 
-// Members returns the members for the office
-func (o Office) Members(ctx context.Context) ([]*User, error) {
-	memberships, err := dynamo.FindTypesByEntity1[*User, *Office, *Membership](ctx, *clients.GetDefaultClient(ctx), &o)
-	var users []*User
-	for _, m := range memberships {
-		loaded, err := m.LoadEntity0(ctx, *clients.GetDefaultClient(ctx))
-		if err != nil {
-			return nil, err
-		}
-		if loaded {
-			users = append(users, m.Entity0)
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-	return users, nil
+// Memberships returns the members for the office
+func (o Office) Memberships(ctx context.Context) ([]*Membership, error) {
+	return dynamo.FindTypesByEntity1[*User, *Office, *Membership](ctx, *clients.GetDefaultClient(ctx), &o)
 }
 
 // Admins returns the admins for the office

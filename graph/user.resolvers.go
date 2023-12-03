@@ -6,11 +6,8 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/entegral/officebuddy/types"
-	"github.com/entegral/toolbox/clients"
-	"github.com/entegral/toolbox/dynamo"
 	"github.com/entegral/toolbox/helpers"
 )
 
@@ -18,15 +15,15 @@ import (
 func (r *mutationResolver) Users(ctx context.Context, input []*types.UserSaver) ([]*types.User, error) {
 	ret := []*types.User{}
 	for _, u := range input {
-		newUser, err := types.NewUser(ctx, u.GUID, u.Email, u.FirstName, u.LastName)
+		// newUser, err := types.NewUser(ctx, u.GUID, u.Email, u.FirstName, u.LastName)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		_, err := helpers.PutItem(ctx, &u.User)
 		if err != nil {
 			return nil, err
 		}
-		_, err = helpers.PutItem(ctx, newUser)
-		if err != nil {
-			return nil, err
-		}
-		ret = append(ret, newUser)
+		ret = append(ret, &u.User)
 	}
 	return ret, nil
 }
@@ -47,18 +44,24 @@ func (r *queryResolver) Users(ctx context.Context, input []*types.UserFinder) ([
 	return ret, nil
 }
 
-// Admins is the resolver for the admins field.
-func (r *queryResolver) Admins(ctx context.Context, groupGUID string) ([]*types.User, error) {
-	panic(fmt.Errorf("not implemented: Admins - admins"))
-}
-
 // Memberships is the resolver for the memberships field.
-func (r *userResolver) Memberships(ctx context.Context, obj *types.User) ([]*types.Office, error) {
-	offices, err := dynamo.FindEntity1Links[*types.User, *types.Office](ctx, *clients.GetDefaultClient(ctx), obj)
+func (r *userResolver) Memberships(ctx context.Context, obj *types.User, roles []types.Role) ([]*types.Membership, error) {
+	memberships, err := obj.Memberships(ctx, r.Clients)
 	if err != nil {
 		return nil, err
 	}
-	return offices, nil
+	withRoles := []*types.Membership{}
+	if len(roles) == 0 {
+		return memberships, nil
+	}
+	for _, m := range memberships {
+		for _, r := range roles {
+			if m.Role == r {
+				withRoles = append(withRoles, m)
+			}
+		}
+	}
+	return withRoles, nil
 }
 
 // Mutation returns MutationResolver implementation.
