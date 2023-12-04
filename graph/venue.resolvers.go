@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/entegral/officebuddy/types"
 	"github.com/entegral/toolbox/clients"
@@ -14,7 +13,11 @@ import (
 
 // PutVenue is the resolver for the putVenue field.
 func (r *mutationResolver) PutVenue(ctx context.Context, officeGUID string, eventGUID string, room *string, instructions *string) (*types.Venue, error) {
-	panic(fmt.Errorf("not implemented: PutVenue - putVenue"))
+	venue, err := types.NewVenue(ctx, types.Event{GUID: eventGUID}, types.Office{GUID: officeGUID}, &types.NewVenueOpts{Room: room, Instructions: instructions})
+	if err != nil {
+		return nil, err
+	}
+	return venue, venue.Link(ctx, *clients.GetDefaultClient(ctx))
 }
 
 // Office is the resolver for the Office field.

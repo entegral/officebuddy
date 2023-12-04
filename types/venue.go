@@ -23,16 +23,28 @@ func (v *Venue) Link(ctx context.Context, clients clients.Client) error {
 	return err
 }
 
-func NewVenue(ctx context.Context, event *Event, office *Office, room, instructions *string) (*Venue, error) {
+type NewVenueOpts struct {
+	Room         *string
+	Instructions *string
+}
+
+// NewVenue creates a new venue.
+func NewVenue(ctx context.Context, event Event, office Office, opts *NewVenueOpts) (*Venue, error) {
+	link, err := dynamo.CheckLink[*Event, *Office](&event, &office, dynamo.OneToMany)
 	venue := &Venue{
-		Room:         room,
-		Instructions: instructions,
-		DiLink: dynamo.DiLink[*Event, *Office]{
-			Entity0:  event,
-			Entity1:  office,
-			Relation: dynamo.OneToMany,
-		},
+		DiLink: *link,
 	}
-	_, _, err := venue.LoadEntities(ctx, *clients.GetDefaultClient(ctx))
-	return venue, err
+	switch err.(type) {
+	case nil:
+		return venue, nil
+	case dynamo.ErrLinkNotFound:
+		if opts != nil {
+			venue.Room = opts.Room
+			venue.Instructions = opts.Instructions
+		}
+		_, _, err := venue.LoadEntities(ctx, *clients.GetDefaultClient(ctx))
+		return venue, err
+	default:
+		return nil, err
+	}
 }

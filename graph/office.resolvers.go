@@ -27,28 +27,9 @@ func (r *mutationResolver) DeleteOffice(ctx context.Context, officeGUID string) 
 	panic(fmt.Errorf("not implemented: DeleteOffice - deleteOffice"))
 }
 
-// Schedules is the resolver for the schedules field.
-func (r *officeResolver) Schedules(ctx context.Context, obj *types.Office, scheduleGUID *string) ([]*types.Schedule, error) {
-	schedule := types.Schedule{
-		OfficeGUID: obj.GUID,
-	}
-	if scheduleGUID != nil && *scheduleGUID != "" {
-		schedule.ScheduleGUID = *scheduleGUID
-		loaded, err := helpers.GetItem(ctx, &schedule)
-		if err != nil {
-			return nil, err
-		}
-		if !loaded {
-			return nil, nil
-		}
-		return []*types.Schedule{&schedule}, nil
-	}
-	pk, _ := schedule.Keys(0)
-	schedules, err := helpers.QueryByGSI[*types.Schedule](ctx, 0, pk, "schedule:")
-	if err != nil {
-		return nil, err
-	}
-	return schedules, nil
+// Events is the resolver for the Events field.
+func (r *officeResolver) Events(ctx context.Context, obj *types.Office) ([]*types.Venue, error) {
+	panic(fmt.Errorf("not implemented: Events - Events"))
 }
 
 // Office is the resolver for the office field.

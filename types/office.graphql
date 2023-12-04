@@ -6,8 +6,7 @@ type Office {
   address: Address
   Admins: [User!]
   Memberships: [Membership!]
-  Events: [Event!]
-  Schedules(scheduleGUID: String): [Schedule!]
+  Events: [Venue!]
 }
 
 type Address {
