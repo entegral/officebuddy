@@ -1,0 +1,15 @@
+type Venue {
+  room: String
+  instructions: String
+  Office: Office!
+  Events: Event!
+}
+
+extend type Mutation {
+  putVenue(
+    officeGUID: String!
+    eventGUID: String!
+    room: String
+    instructions: String
+  ): Venue!
+}

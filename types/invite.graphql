@@ -1,0 +1,23 @@
+type Invite {
+  User: User!
+  Event: Event!
+  status: InviteStatus!
+}
+
+enum InviteStatus {
+  ACCEPTED
+  DECLINED
+  PENDING
+}
+
+extend type Mutation {
+  putInvite(
+    userEmail: String!
+    eventGUID: String!
+    status: InviteStatus!
+  ): Invite!
+  deleteInvite(
+    userEmail: String!
+    eventGUID: String!
+  ): Invite!
+}

@@ -2,75 +2,85 @@ package types
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/entegral/toolbox/clients"
+	"github.com/dgryski/trifles/uuid"
 	"github.com/entegral/toolbox/dynamo"
-	"github.com/entegral/toolbox/helpers"
 	"github.com/entegral/toolbox/types"
 )
 
 // Event is a type for defining an event
 type Event struct {
-	dynamo.DiLink[*User, *Office]
-	Title       string         `json:"title"`
-	Description string         `json:"description"`
-	Start       types.DateTime `json:"start"`
-	End         types.DateTime `json:"end"`
-	Address     Address        `json:"address"`
+	dynamo.Row
+	CreatedByEmail string         `json:"createdByEmail"`
+	GUID           string         `json:"guid"`
+	Title          string         `json:"title"`
+	Description    string         `json:"description"`
+	Start          types.DateTime `json:"start"`
+	End            types.DateTime `json:"end"`
+}
+
+type EventInput struct {
+	Event
 }
 
 func (e *Event) Type() string {
 	return "event"
 }
 
-// Link we will override the default Link method to add the extra fields to the row.
-func (e *Event) Link(ctx context.Context, clients clients.Client) error {
-	_, err := helpers.PutItem(ctx, e)
-	return err
+func (e *Event) Keys(gsi int) (string, string) {
+	if e.GUID == "" {
+		e.GUID = uuid.UUIDv4()
+	}
+	e.Pk = "event:" + e.GUID
+	e.Sk = "info"
+	e.Pk1 = "event:" + e.GUID
+	e.Sk1 = "start:" + e.Start.String()
+	e.Pk2 = e.Pk1
+	e.Sk2 = "end:" + e.End.String()
+	switch gsi {
+	case 0:
+		return e.Pk, e.Sk
+	case 1:
+		return e.Pk1, e.Sk1
+	case 2:
+		return e.Pk2, e.Sk2
+	}
+	return "", ""
 }
 
-// User loads the user for the event.
-func (e *Event) User(ctx context.Context) (*User, error) {
-	loaded, err := e.LoadEntity0(ctx, *clients.GetDefaultClient(ctx))
-	if err != nil {
-		return nil, err
-	}
-	if !loaded {
-		return nil, dynamo.ErrEntityNotFound[*User]{Entity: e.Entity0}
-	}
-	return e.Entity0, nil
-}
-
-// Office loads the office for the event.
-func (e *Event) Office(ctx context.Context) (*Office, error) {
-	loaded, err := e.LoadEntity1(ctx, *clients.GetDefaultClient(ctx))
-	if err != nil {
-		return nil, err
-	}
-	if !loaded {
-		return nil, dynamo.ErrEntityNotFound[*User]{Entity: e.Entity0}
-	}
-	return e.Entity1, nil
+type NewEventOpts struct {
+	GUID        *string
+	Title       *string
+	Description *string
+	Start       *types.DateTime
+	End         *types.DateTime
 }
 
 // NewEvent creates a new event.
-func NewEvent(ctx context.Context, userEmail string, officeGUID string, title string, description string, start, end types.DateTime) (*Event, error) {
-	link, err := dynamo.CheckLink[*User, *Office](&User{Email: userEmail}, &Office{GUID: officeGUID}, dynamo.OneToMany)
-	switch err.(type) {
-	case nil, dynamo.ErrLinkNotFound:
-		event := &Event{
-			DiLink:      *link,
-			Title:       title,
-			Description: description,
-			Start:       start,
-			End:         end,
-		}
-		err = event.Link(ctx, *clients.GetDefaultClient(ctx))
-		if err != nil {
-			return nil, err
-		}
-		return event, nil
-	default:
-		return nil, err
+func NewEvent(ctx context.Context, createdByEmail string, opts *NewEventOpts) (*Event, error) {
+	if createdByEmail == "" {
+		return nil, fmt.Errorf("createdByEmail must not be empty")
 	}
+	event := &Event{
+		GUID:           uuid.UUIDv4(),
+		CreatedByEmail: createdByEmail,
+	}
+	if opts.GUID != nil && *opts.GUID != "" {
+		event.GUID = *opts.GUID
+	}
+	if opts.Title != nil && *opts.Title != "" {
+		event.Title = *opts.Title
+	}
+	if opts.Description != nil && *opts.Description != "" {
+		event.Description = *opts.Description
+	}
+	if opts.Start != nil {
+		event.Start = *opts.Start
+	}
+	if opts.End != nil {
+		event.End = *opts.End
+	}
+
+	return event, nil
 }

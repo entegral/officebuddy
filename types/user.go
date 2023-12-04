@@ -24,7 +24,7 @@ func (u *User) Type() string {
 
 // Keys returns the partition key and sort key for the given GSI.
 func (u *User) Keys(gsi int) (partitionKey, sortKey string) {
-	u.Pk = u.Email
+	u.Pk = "user:" + u.Email
 	u.Sk = "userinfo"
 	u.Pk1 = "user:" + u.GUID
 	u.Sk1 = u.Sk
@@ -90,7 +90,7 @@ func (u *User) AdminOf(ctx context.Context, clients clients.Client) ([]*Office, 
 
 // Memberships returns the office memberships for the user.
 func (u *User) Memberships(ctx context.Context, clients clients.Client) ([]*Membership, error) {
-	memberships, err := dynamo.FindTypesByEntity0[*User, *Office, *Membership](ctx, clients, u)
+	memberships, err := dynamo.FindCustomLinksByEntity0[*User, *Office, *Membership](ctx, clients, u)
 	if err != nil {
 		return nil, err
 	}

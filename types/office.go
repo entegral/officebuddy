@@ -45,7 +45,7 @@ func (o Office) Events(ctx context.Context) ([]*Event, error) {
 
 // Memberships returns the members for the office
 func (o Office) Memberships(ctx context.Context) ([]*Membership, error) {
-	return dynamo.FindTypesByEntity1[*User, *Office, *Membership](ctx, *clients.GetDefaultClient(ctx), &o)
+	return dynamo.FindCustomLinksByEntity1[*User, *Office, *Membership](ctx, *clients.GetDefaultClient(ctx), &o)
 }
 
 // Admins returns the admins for the office

@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/entegral/officebuddy/types"
+	"github.com/entegral/toolbox/dynamo"
 	"github.com/entegral/toolbox/helpers"
 )
 
@@ -62,6 +63,26 @@ func (r *userResolver) Memberships(ctx context.Context, obj *types.User, roles [
 		}
 	}
 	return withRoles, nil
+}
+
+// Invites is the resolver for the Invites field.
+func (r *userResolver) Invites(ctx context.Context, obj *types.User, status []types.InviteStatus) ([]*types.Invite, error) {
+	invites, err := dynamo.FindCustomLinksByEntity1[*types.Event, *types.User, *types.Invite](ctx, r.Clients, obj)
+	if err != nil {
+		return nil, err
+	}
+	if len(status) == 0 {
+		return invites, nil
+	}
+	withStatus := []*types.Invite{}
+	for _, i := range invites {
+		for _, s := range status {
+			if i.Status == s {
+				withStatus = append(withStatus, i)
+			}
+		}
+	}
+	return withStatus, nil
 }
 
 // Mutation returns MutationResolver implementation.

@@ -6,21 +6,40 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/entegral/officebuddy/types"
 	"github.com/entegral/toolbox/clients"
 	"github.com/entegral/toolbox/dynamo"
-	types1 "github.com/entegral/toolbox/types"
+	"github.com/entegral/toolbox/helpers"
 )
 
-// PutEvent is the resolver for the putEvent field.
-func (r *mutationResolver) PutEvent(ctx context.Context, userEmail string, officeGUID string, title string, description string, start types1.DateTime, end types1.DateTime) (*types.Event, error) {
-	return types.NewEvent(ctx, userEmail, officeGUID, title, description, start, end)
+// Invites is the resolver for the Invites field.
+func (r *eventResolver) Invites(ctx context.Context, obj *types.Event) ([]*types.Invite, error) {
+	panic(fmt.Errorf("not implemented: Invites - Invites"))
+}
+
+// Venue is the resolver for the Venue field.
+func (r *eventResolver) Venue(ctx context.Context, obj *types.Event) ([]*types.Venue, error) {
+	panic(fmt.Errorf("not implemented: Venue - Venue"))
+}
+
+// PutEvents is the resolver for the putEvents field.
+func (r *mutationResolver) PutEvents(ctx context.Context, events []*types.EventInput) ([]*types.Event, error) {
+	ret := make([]*types.Event, len(events))
+	for i, event := range events {
+		_, err := helpers.PutItem(ctx, &event.Event)
+		if err != nil {
+			return nil, err
+		}
+		ret[i] = &event.Event
+	}
+	return ret, nil
 }
 
 // DeleteEvent is the resolver for the deleteEvent field.
-func (r *mutationResolver) DeleteEvent(ctx context.Context, userEmail string, officeGUID string) (bool, error) {
-	event, err := dynamo.CheckLink[*types.User, *types.Office](&types.User{Email: userEmail}, &types.Office{GUID: officeGUID}, dynamo.OneToMany)
+func (r *mutationResolver) DeleteEvent(ctx context.Context, userEmail string, eventGUID string) (bool, error) {
+	event, err := dynamo.CheckLink[*types.User, *types.Office](&types.User{Email: userEmail}, &types.Office{GUID: eventGUID}, dynamo.OneToMany)
 	switch err.(type) {
 	case nil:
 		return true, event.Unlink(ctx, *clients.GetDefaultClient(ctx))
@@ -30,3 +49,8 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, userEmail string, of
 		return false, err
 	}
 }
+
+// Event returns EventResolver implementation.
+func (r *Resolver) Event() EventResolver { return &eventResolver{r} }
+
+type eventResolver struct{ *Resolver }
