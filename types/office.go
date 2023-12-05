@@ -8,47 +8,42 @@ import (
 	"github.com/entegral/toolbox/dynamo"
 )
 
-// Office is a type for defining an office.
+// Office is a struct representing an office.
 type Office struct {
-	dynamo.Row
-	GUID        string   `json:"guid"`
-	Name        string   `json:"name"`
-	CreatedBy   string   `json:"createdBy"`
-	Description *string  `json:"description,omitempty"`
-	Address     *Address `json:"address,omitempty"`
+	dynamo.Row           // Row is a struct from the dynamo package that represents a row in a table.
+	GUID        string   `json:"guid"`                  // GUID is the unique identifier for the office.
+	Name        string   `json:"name"`                  // Name is the name of the office.
+	CreatedBy   string   `json:"createdBy"`             // CreatedBy is the identifier of the entity that created the office.
+	Description *string  `json:"description,omitempty"` // Description is an optional description of the office.
+	Address     *Address `json:"address,omitempty"`     // Address is an optional address of the office.
 }
 
+// Type method returns the type of the struct, in this case "office".
 func (o *Office) Type() string {
 	return "office"
 }
 
-// NewOffice simplifies the creation of a new office.
+// NewOffice is a function that creates a new office. It requires a name, a createdBy identifier, a guid, a description, and an address.
 func NewOffice(ctx context.Context, name, createdBy string, guid, description *string, address Address) Office {
 	o := Office{
 		Name:        name,
 		Description: description,
 		CreatedBy:   createdBy,
 		Address:     &address,
-		GUID:        uuid.UUIDv4(),
+		GUID:        uuid.UUIDv4(), // Generate a new UUID for the office.
 	}
 	if guid != nil && *guid != "" {
-		o.GUID = *guid
+		o.GUID = *guid // If a GUID is provided, use it instead of the generated one.
 	}
 	return o
 }
 
-// Events returns the events for the office
-func (o Office) Events(ctx context.Context) ([]*Event, error) {
-	// load the events for the office by querying the office_events GSI
-	return nil, nil
-}
-
-// Memberships returns the members for the office
+// Memberships method returns the memberships associated with the office.
 func (o Office) Memberships(ctx context.Context) ([]*Membership, error) {
 	return dynamo.FindCustomLinksByEntity1[*User, *Office, *Membership](ctx, *clients.GetDefaultClient(ctx), &o)
 }
 
-// Venue returns the venue for an office
+// Venue method returns the venues associated with the office.
 func (o Office) Venue(ctx context.Context, clients clients.Client) ([]*Venue, error) {
 	venues, err := dynamo.FindCustomLinksByEntity1[*Event, *Office, *Venue](
 		ctx,
@@ -61,31 +56,28 @@ func (o Office) Venue(ctx context.Context, clients clients.Client) ([]*Venue, er
 	return venues, nil
 }
 
+// AddressInput is a struct representing an input for an address.
 type AddressInput struct {
-	Address
+	Address // Address is a struct representing an address.
 }
 
-// Address is a type for defining an address.
+// Address is a struct representing an address.
 type Address struct {
-	Street  string `json:"street"`
-	City    string `json:"city"`
-	State   string `json:"state"`
-	Zip     string `json:"zip"`
-	Country string `json:"country"`
+	Street  string `json:"street"`  // Street is the street of the address.
+	City    string `json:"city"`    // City is the city of the address.
+	State   string `json:"state"`   // State is the state of the address.
+	Zip     string `json:"zip"`     // Zip is the zip code of the address.
+	Country string `json:"country"` // Country is the country of the address.
 }
 
-// Keys returns the partition key and sort key for the row
+// Keys method returns the primary key and the sort key of the office.
 func (o Office) Keys(gsi int) (string, string) {
-	// For this example, assuming GUID is the partition key and Email is the sort key.
-	// Additional logic can be added to handle different GSIs if necessary.
-
-	o.Pk = "office:" + o.GUID
-	o.Sk = "info"
+	o.Pk = "office:" + o.GUID // Pk is the primary key of the office.
+	o.Sk = "info"             // Sk is the sort key of the office.
 	switch gsi {
-	case 0: // Primary keys
+	case 0:
 		return o.Pk, o.Sk
 	default:
-		// Handle other GSIs or return an error
-		return "", ""
+		return "", "" // If the gsi is not 0, return empty strings.
 	}
 }
