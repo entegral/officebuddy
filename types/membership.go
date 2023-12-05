@@ -8,36 +8,38 @@ import (
 	"github.com/entegral/toolbox/dynamo"
 )
 
-// Membership is a type for defining a membership of a user to an office.
+// Membership is a struct representing a membership.
 type Membership struct {
-	dynamo.DiLink[*User, *Office]
-	Role      Role      `json:"role"`
-	CreatedAt time.Time `json:"createdAt"`
+	dynamo.DiLink[*User, *Office]           // DiLink is a struct from the dynamo package that links two entities.
+	Role                          Role      `json:"role"`      // Role represents the role of the member.
+	CreatedAt                     time.Time `json:"createdAt"` // CreatedAt represents the time when the membership was created.
 }
 
+// Type method returns the type of the struct, in this case "membership".
 func (m *Membership) Type() string {
 	return "membership"
 }
 
+// NewMembershipErrors is a type representing errors that can occur when creating a new membership.
 type NewMembershipErrors string
 
+// Constants representing possible errors when creating a new membership.
 const (
-	// ErrUserNotFound is the error for when a user is not found.
-	ErrUserNotFound NewMembershipErrors = "user not found"
-	// ErrorOfficeNotFound is the error for when an office is not found.
+	ErrUserNotFound     NewMembershipErrors = "user not found"
 	ErrorOfficeNotFound NewMembershipErrors = "office not found"
 )
 
-// NewMembershipError is the error type for when a new membership cannot be created.
+// NewMembershipError is a struct representing an error when creating a new membership.
 type NewMembershipError struct {
-	message NewMembershipErrors
+	message NewMembershipErrors // Message is the error message.
 }
 
+// Error method returns the error message as a string.
 func (e NewMembershipError) Error() string {
 	return string(e.message)
 }
 
-// User loads the user for the membership.
+// User method loads the user entity associated with the membership.
 func (m *Membership) User(ctx context.Context) (*User, error) {
 	loaded, err := m.LoadEntity0(ctx, *clients.GetDefaultClient(ctx))
 	if err != nil {
@@ -49,7 +51,7 @@ func (m *Membership) User(ctx context.Context) (*User, error) {
 	return m.Entity0, nil
 }
 
-// Office loads the office for the membership.
+// Office method loads the office entity associated with the membership.
 func (m *Membership) Office(ctx context.Context) (*Office, error) {
 	loaded, err := m.LoadEntity1(ctx, *clients.GetDefaultClient(ctx))
 	if err != nil {
@@ -61,8 +63,7 @@ func (m *Membership) Office(ctx context.Context) (*Office, error) {
 	return m.Entity1, nil
 }
 
-// NewMembership simplifies the loading of a membership from dynamo.
-// If either the user or office is not found, an error is returned.
+// NewMembership is a function that creates a new membership. It requires an email, an office GUID, and a role.
 func NewMembership(ctx context.Context, email, officeGUID string, role Role) (*Membership, error) {
 	dilink, newErr := dynamo.CheckLink[*User, *Office](&User{Email: email}, &Office{GUID: officeGUID})
 	membership := &Membership{
@@ -81,17 +82,16 @@ func NewMembership(ctx context.Context, email, officeGUID string, role Role) (*M
 	}
 }
 
-// Role is a type for defining the role of a user in an office.
+// Role is a type representing the role of a member.
 type Role string
 
-// String returns the string representation of the role.
+// String method returns the Role value as a string.
 func (r Role) String() string {
 	return string(r)
 }
 
+// Constants representing possible roles of a member.
 const (
-	// RoleAdmin is the admin role.
-	RoleAdmin Role = "admin"
-	// RoleMember is the member role.
+	RoleAdmin  Role = "admin"
 	RoleMember Role = "member"
 )
