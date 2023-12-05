@@ -33,3 +33,4 @@ vendor/
 
 .vscode
 .envrc
+.env
