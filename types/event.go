@@ -5,39 +5,35 @@ import (
 	"fmt"
 
 	"github.com/dgryski/trifles/uuid"
-	"github.com/entegral/toolbox/clients"
 	"github.com/entegral/toolbox/dynamo"
-	"github.com/entegral/toolbox/helpers"
 	"github.com/entegral/toolbox/types"
 )
 
-// Event is a type for defining an event
+// Event struct represents an event with necessary fields.
 type Event struct {
-	dynamo.Row
-	CreatedByEmail string         `json:"createdByEmail"`
-	GUID           string         `json:"guid"`
-	Title          string         `json:"title"`
-	Description    string         `json:"description"`
-	Start          types.DateTime `json:"start"`
-	End            types.DateTime `json:"end"`
+	dynamo.Row                    // Embedding dynamo.Row to inherit its fields and methods.
+	CreatedByEmail string         `json:"createdByEmail"` // The email of the user who created the event.
+	GUID           string         `json:"guid"`           // The unique identifier for the event.
+	Title          string         `json:"title"`          // The title of the event.
+	Description    string         `json:"description"`    // The description of the event.
+	Start          types.DateTime `json:"start"`          // The start time of the event.
+	End            types.DateTime `json:"end"`            // The end time of the event.
 }
 
+// EventInput struct is used for creating a new event.
 type EventInput struct {
-	Event
+	Event // Embedding Event to inherit its fields and methods.
 }
 
+// Type method returns the type of the struct, in this case "event".
 func (e *Event) Type() string {
 	return "event"
 }
 
-func (e *Event) Link(ctx context.Context, clients clients.Client) error {
-	_, err := helpers.PutItem(ctx, e)
-	return err
-}
-
+// Keys method generates and returns the primary and secondary keys for the event based on the given Global Secondary Index (gsi).
 func (e *Event) Keys(gsi int) (string, string) {
 	if e.GUID == "" {
-		e.GUID = uuid.UUIDv4()
+		e.GUID = uuid.UUIDv4() // Generate a new UUID if it doesn't exist.
 	}
 	e.Pk = "event:" + e.GUID
 	e.Sk = "info"
@@ -56,6 +52,7 @@ func (e *Event) Keys(gsi int) (string, string) {
 	return "", ""
 }
 
+// NewEventOpts struct is used to pass options when creating a new event.
 type NewEventOpts struct {
 	GUID        *string
 	Title       *string
@@ -64,29 +61,29 @@ type NewEventOpts struct {
 	End         *types.DateTime
 }
 
-// NewEvent creates a new event.
+// NewEvent function creates a new event and returns it. If createdByEmail is empty, it returns an error.
 func NewEvent(ctx context.Context, createdByEmail string, opts *NewEventOpts) (*Event, error) {
 	if createdByEmail == "" {
 		return nil, fmt.Errorf("createdByEmail must not be empty")
 	}
 	event := &Event{
-		GUID:           uuid.UUIDv4(),
+		GUID:           uuid.UUIDv4(), // Generate a new UUID for the event.
 		CreatedByEmail: createdByEmail,
 	}
 	if opts.GUID != nil && *opts.GUID != "" {
-		event.GUID = *opts.GUID
+		event.GUID = *opts.GUID // If a GUID is provided in the options, use it instead of the generated one.
 	}
 	if opts.Title != nil && *opts.Title != "" {
-		event.Title = *opts.Title
+		event.Title = *opts.Title // If a title is provided in the options, use it.
 	}
 	if opts.Description != nil && *opts.Description != "" {
-		event.Description = *opts.Description
+		event.Description = *opts.Description // If a description is provided in the options, use it.
 	}
 	if opts.Start != nil {
-		event.Start = *opts.Start
+		event.Start = *opts.Start // If a start time is provided in the options, use it.
 	}
 	if opts.End != nil {
-		event.End = *opts.End
+		event.End = *opts.End // If an end time is provided in the options, use it.
 	}
 
 	return event, nil
