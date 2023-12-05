@@ -25,6 +25,24 @@ func (i *Invite) Link(ctx context.Context, clients clients.Client) error {
 	return err
 }
 
+// User returns the user associated with the invite.
+func (i *Invite) User(ctx context.Context, clients clients.Client) (*User, error) {
+	_, err := i.LoadEntity1(ctx, clients)
+	if err != nil {
+		return nil, err
+	}
+	return i.Entity1, nil
+}
+
+// Event returns the event associated with the invite.
+func (i *Invite) Event(ctx context.Context, clients clients.Client) (*Event, error) {
+	_, err := i.LoadEntity0(ctx, clients)
+	if err != nil {
+		return nil, err
+	}
+	return i.Entity0, nil
+}
+
 // NewInviteOpts is a type for defining options for creating a new invite.
 type NewInviteOpts struct {
 	Status *InviteStatus
@@ -37,9 +55,8 @@ func NewInvite(ctx context.Context, event Event, user User, opts *NewInviteOpts)
 	}
 	invite := &Invite{
 		DiLink: dynamo.DiLink[*Event, *User]{
-			Entity0:  &event,
-			Entity1:  &user,
-			Relation: dynamo.OneToMany,
+			Entity0: &event,
+			Entity1: &user,
 		},
 	}
 	if opts != nil && opts.Status != nil {

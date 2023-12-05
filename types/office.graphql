@@ -4,9 +4,8 @@ type Office {
   name: String!
   description: String
   address: Address
-  Admins: [User!]
   Memberships: [Membership!]
-  Events: [Venue!]
+  Venue: [Venue!]
 }
 
 type Address {
@@ -27,7 +26,6 @@ input AddressInput {
 
 extend type Query {
   office(officeGUID: String!): Office
-  offices(userGUID: String!): [Office!]
 }
 
 extend type Mutation {

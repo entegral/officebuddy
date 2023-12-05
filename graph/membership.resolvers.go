@@ -20,24 +20,20 @@ func (r *membershipResolver) CreatedAt(ctx context.Context, obj *types.Membershi
 
 // PutMembership is the resolver for the putMembership field.
 func (r *mutationResolver) PutMembership(ctx context.Context, email string, officeGUID string, role types.Role) (*types.Membership, error) {
-	membership, err := types.LoadMembership(email, officeGUID, role)
-	if err != nil && !errors.Is(err, dynamo.ErrLinkNotFound{}) {
-		return nil, err
+	membership, err := types.NewMembership(ctx, email, officeGUID, role)
+	if errors.Is(err, dynamo.ErrLinkNotFound{}) {
+		return membership, membership.Put(ctx, membership)
 	}
-	err = membership.Link(ctx, r.Clients)
-	if err != nil {
-		return nil, err
-	}
-	return membership, nil
+	return nil, err
 }
 
 // DeleteMembership is the resolver for the deleteMembership field.
 func (r *mutationResolver) DeleteMembership(ctx context.Context, email string, officeGUID string) (bool, error) {
-	membership, err := types.LoadMembership(email, officeGUID, types.RoleMember)
+	membership, err := types.NewMembership(ctx, email, officeGUID, types.RoleMember)
 	if err != nil {
 		return false, err
 	}
-	err = membership.Unlink(ctx, r.Clients)
+	err = membership.Delete(ctx, membership)
 	if err != nil {
 		return false, err
 	}

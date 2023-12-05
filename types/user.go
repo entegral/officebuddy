@@ -71,7 +71,7 @@ func NewUser(ctx context.Context, guid, email, fname, lname string) (*User, erro
 
 // AdminOf returns the offices the user is an admin of.
 func (u *User) AdminOf(ctx context.Context, clients clients.Client) ([]*Office, error) {
-	memberships, err := u.Memberships(ctx, clients)
+	memberships, err := u.Memberships(ctx, clients, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -89,10 +89,48 @@ func (u *User) AdminOf(ctx context.Context, clients clients.Client) ([]*Office, 
 }
 
 // Memberships returns the office memberships for the user.
-func (u *User) Memberships(ctx context.Context, clients clients.Client) ([]*Membership, error) {
+func (u *User) Memberships(ctx context.Context, clients clients.Client, roles []Role) ([]*Membership, error) {
 	memberships, err := dynamo.FindCustomLinksByEntity0[*User, *Office, *Membership](ctx, clients, u)
 	if err != nil {
 		return nil, err
 	}
-	return memberships, nil
+	if len(roles) == 0 {
+		return memberships, nil
+	}
+	withRoles := []*Membership{}
+	if len(roles) == 0 {
+		return memberships, nil
+	}
+	for _, m := range memberships {
+		for _, r := range roles {
+			if m.Role == r {
+				withRoles = append(withRoles, m)
+			}
+		}
+	}
+	return withRoles, nil
+}
+
+// Invites returns the invites for the user.
+func (u *User) Invites(ctx context.Context, clients clients.Client, status []InviteStatus) ([]*Invite, error) {
+	invites, err := dynamo.FindCustomLinksByEntity1[*Event, *User, *Invite](
+		ctx,
+		clients,
+		u,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(status) == 0 {
+		return invites, nil
+	}
+	withStatus := []*Invite{}
+	for _, i := range invites {
+		for _, s := range status {
+			if i.Status == s {
+				withStatus = append(withStatus, i)
+			}
+		}
+	}
+	return withStatus, nil
 }

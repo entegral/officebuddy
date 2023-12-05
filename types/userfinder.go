@@ -45,5 +45,12 @@ func (u *UserFinder) LoadByGUID(ctx context.Context) (bool, error) {
 
 // LoadByEmail fetches the latest version of a user by email.
 func (u *UserFinder) LoadByEmail(ctx context.Context) (bool, error) {
-	return helpers.GetItem(ctx, &u.User)
+	err := u.Get(ctx, &u.User)
+	if err != nil {
+		return false, err
+	}
+	if u.GetItemOutput == nil || u.GetItemOutput.Item == nil {
+		return false, nil
+	}
+	return true, nil
 }

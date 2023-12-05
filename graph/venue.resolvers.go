@@ -6,36 +6,30 @@ package graph
 
 import (
 	"context"
+	"errors"
 
 	"github.com/entegral/officebuddy/types"
 	"github.com/entegral/toolbox/clients"
+	"github.com/entegral/toolbox/dynamo"
 )
 
 // PutVenue is the resolver for the putVenue field.
 func (r *mutationResolver) PutVenue(ctx context.Context, officeGUID string, eventGUID string, room *string, instructions *string) (*types.Venue, error) {
 	venue, err := types.NewVenue(ctx, types.Event{GUID: eventGUID}, types.Office{GUID: officeGUID}, &types.NewVenueOpts{Room: room, Instructions: instructions})
-	if err != nil {
-		return nil, err
+	if errors.Is(err, dynamo.ErrLinkNotFound{}) {
+		return venue, venue.Put(ctx, venue)
 	}
-	return venue, venue.Link(ctx, *clients.GetDefaultClient(ctx))
+	return nil, err
 }
 
 // Office is the resolver for the Office field.
 func (r *venueResolver) Office(ctx context.Context, obj *types.Venue) (*types.Office, error) {
-	_, err := obj.LoadEntity1(ctx, *clients.GetDefaultClient(ctx))
-	if err != nil {
-		return nil, err
-	}
-	return obj.Entity1, nil
+	return obj.Office(ctx, *clients.GetDefaultClient(ctx))
 }
 
 // Events is the resolver for the Events field.
 func (r *venueResolver) Events(ctx context.Context, obj *types.Venue) (*types.Event, error) {
-	_, err := obj.LoadEntity0(ctx, *clients.GetDefaultClient(ctx))
-	if err != nil {
-		return nil, err
-	}
-	return obj.Entity0, nil
+	return obj.Events(ctx, *clients.GetDefaultClient(ctx))
 }
 
 // Venue returns VenueResolver implementation.

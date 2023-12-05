@@ -39,7 +39,7 @@ func (r *mutationResolver) PutEvents(ctx context.Context, events []*types.EventI
 
 // DeleteEvent is the resolver for the deleteEvent field.
 func (r *mutationResolver) DeleteEvent(ctx context.Context, userEmail string, eventGUID string) (bool, error) {
-	event, err := dynamo.CheckLink[*types.User, *types.Office](&types.User{Email: userEmail}, &types.Office{GUID: eventGUID}, dynamo.OneToMany)
+	event, err := dynamo.CheckLink[*types.User, *types.Office](&types.User{Email: userEmail}, &types.Office{GUID: eventGUID})
 	switch err.(type) {
 	case nil:
 		return true, event.Unlink(ctx, *clients.GetDefaultClient(ctx))

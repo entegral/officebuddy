@@ -14,25 +14,17 @@ import (
 
 // User is the resolver for the User field.
 func (r *inviteResolver) User(ctx context.Context, obj *types.Invite) (*types.User, error) {
-	_, _, err := obj.LoadEntities(ctx, *clients.GetDefaultClient(ctx))
-	if err != nil {
-		return nil, err
-	}
-	return obj.Entity1, nil
+	return obj.User(ctx, *clients.GetDefaultClient(ctx))
 }
 
 // Event is the resolver for the Event field.
 func (r *inviteResolver) Event(ctx context.Context, obj *types.Invite) (*types.Event, error) {
-	_, _, err := obj.LoadEntities(ctx, *clients.GetDefaultClient(ctx))
-	if err != nil {
-		return nil, err
-	}
-	return obj.Entity0, nil
+	return obj.Event(ctx, *clients.GetDefaultClient(ctx))
 }
 
 // PutInvite is the resolver for the putInvite field.
 func (r *mutationResolver) PutInvite(ctx context.Context, userEmail string, eventGUID string, status types.InviteStatus) (*types.Invite, error) {
-	dilink, newErr := dynamo.CheckLink[*types.Event, *types.User](&types.Event{CreatedByEmail: userEmail, GUID: eventGUID}, &types.User{Email: userEmail}, dynamo.OneToMany)
+	dilink, newErr := dynamo.CheckLink[*types.Event, *types.User](&types.Event{CreatedByEmail: userEmail, GUID: eventGUID}, &types.User{Email: userEmail})
 	invite := &types.Invite{
 		DiLink: *dilink,
 		Status: status,
@@ -43,15 +35,10 @@ func (r *mutationResolver) PutInvite(ctx context.Context, userEmail string, even
 		return invite, nil
 	case dynamo.ErrLinkNotFound:
 		// invite does not exist
-		return invite, invite.Link(ctx, *clients.GetDefaultClient(ctx))
+		return invite, invite.Put(ctx, invite)
 	default:
 		return nil, newErr
 	}
-	// invite, err := types.NewInvite(ctx, types.Event{CreatedByEmail: userEmail, GUID: eventGUID}, types.User{Email: userEmail}, &types.NewInviteOpts{Status: &status})
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// return invite, invite.Link(ctx, *clients.GetDefaultClient(ctx))
 }
 
 // DeleteInvite is the resolver for the deleteInvite field.
@@ -60,7 +47,7 @@ func (r *mutationResolver) DeleteInvite(ctx context.Context, userEmail string, e
 	if err != nil {
 		return nil, err
 	}
-	return invite, invite.Unlink(ctx, *clients.GetDefaultClient(ctx))
+	return invite, invite.Delete(ctx, invite)
 }
 
 // Invite returns InviteResolver implementation.

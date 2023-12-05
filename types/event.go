@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"github.com/dgryski/trifles/uuid"
+	"github.com/entegral/toolbox/clients"
 	"github.com/entegral/toolbox/dynamo"
+	"github.com/entegral/toolbox/helpers"
 	"github.com/entegral/toolbox/types"
 )
 
@@ -26,6 +28,11 @@ type EventInput struct {
 
 func (e *Event) Type() string {
 	return "event"
+}
+
+func (e *Event) Link(ctx context.Context, clients clients.Client) error {
+	_, err := helpers.PutItem(ctx, e)
+	return err
 }
 
 func (e *Event) Keys(gsi int) (string, string) {

@@ -6,30 +6,41 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/entegral/officebuddy/types"
-	"github.com/entegral/toolbox/helpers"
+	"github.com/entegral/toolbox/clients"
+	"github.com/entegral/toolbox/dynamo"
 )
 
 // PutOffice is the resolver for the putOffice field.
 func (r *mutationResolver) PutOffice(ctx context.Context, guid *string, name string, createdByEmail string, address types.AddressInput, description *string) (*types.Office, error) {
 	office := types.NewOffice(ctx, name, createdByEmail, guid, description, address.Address)
-	_, err := helpers.PutItem(ctx, &office)
+	return &office, office.Put(ctx, &office)
+}
+
+// DeleteOffice is the resolver for the deleteOffice field.
+func (r *mutationResolver) DeleteOffice(ctx context.Context, officeGUID string) (*types.Office, error) {
+	office := types.Office{
+		GUID: officeGUID,
+	}
+	err := office.Delete(ctx, &office)
 	if err != nil {
 		return nil, err
 	}
 	return &office, nil
 }
 
-// DeleteOffice is the resolver for the deleteOffice field.
-func (r *mutationResolver) DeleteOffice(ctx context.Context, officeGUID string) (*types.Office, error) {
-	panic(fmt.Errorf("not implemented: DeleteOffice - deleteOffice"))
-}
-
-// Events is the resolver for the Events field.
-func (r *officeResolver) Events(ctx context.Context, obj *types.Office) ([]*types.Venue, error) {
-	panic(fmt.Errorf("not implemented: Events - Events"))
+// Venue is the resolver for the Venue field.
+func (r *officeResolver) Venue(ctx context.Context, obj *types.Office) ([]*types.Venue, error) {
+	venues, err := dynamo.FindCustomLinksByEntity1[*types.Event, *types.Office, *types.Venue](
+		ctx,
+		*clients.GetDefaultClient(ctx),
+		obj,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return venues, nil
 }
 
 // Office is the resolver for the office field.
@@ -37,24 +48,29 @@ func (r *queryResolver) Office(ctx context.Context, officeGUID string) (*types.O
 	office := types.Office{
 		GUID: officeGUID,
 	}
-	loaded, err := helpers.GetItem(ctx, &office)
+	err := office.Get(ctx, &office)
 	if err != nil {
 		return nil, err
 	}
-	if !loaded {
+	if office.GetItemOutput == nil || office.GetItemOutput.Item == nil {
 		return nil, nil
 	}
 	return &office, nil
-}
-
-// Offices is the resolver for the offices field.
-func (r *queryResolver) Offices(ctx context.Context, userGUID string) ([]*types.Office, error) {
-	// TODO use GSI0 to query the office memberships for the user
-	// TODO Use that list to query the offices' info
-	return nil, nil
 }
 
 // Office returns OfficeResolver implementation.
 func (r *Resolver) Office() OfficeResolver { return &officeResolver{r} }
 
 type officeResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) Offices(ctx context.Context, userGUID string) ([]*types.Office, error) {
+	// TODO use GSI0 to query the office memberships for the user
+	// TODO Use that list to query the offices' info
+	return nil, nil
+}

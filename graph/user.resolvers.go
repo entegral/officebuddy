@@ -8,19 +8,13 @@ import (
 	"context"
 
 	"github.com/entegral/officebuddy/types"
-	"github.com/entegral/toolbox/dynamo"
-	"github.com/entegral/toolbox/helpers"
 )
 
 // Users is the resolver for the Users field.
 func (r *mutationResolver) Users(ctx context.Context, input []*types.UserSaver) ([]*types.User, error) {
 	ret := []*types.User{}
 	for _, u := range input {
-		// newUser, err := types.NewUser(ctx, u.GUID, u.Email, u.FirstName, u.LastName)
-		// if err != nil {
-		// 	return nil, err
-		// }
-		_, err := helpers.PutItem(ctx, &u.User)
+		err := u.Put(ctx, &u.User)
 		if err != nil {
 			return nil, err
 		}
@@ -33,13 +27,12 @@ func (r *mutationResolver) Users(ctx context.Context, input []*types.UserSaver) 
 func (r *queryResolver) Users(ctx context.Context, input []*types.UserFinder) ([]*types.User, error) {
 	ret := []*types.User{}
 	for _, u := range input {
-		user := u.User
-		loaded, err := helpers.GetItem(ctx, &user)
+		err := u.Get(ctx, u)
 		if err != nil {
 			return nil, err
 		}
-		if loaded {
-			ret = append(ret, &user)
+		if u.GetItemOutput != nil && u.GetItemOutput.Item != nil {
+			ret = append(ret, &u.User)
 		}
 	}
 	return ret, nil
@@ -47,42 +40,12 @@ func (r *queryResolver) Users(ctx context.Context, input []*types.UserFinder) ([
 
 // Memberships is the resolver for the memberships field.
 func (r *userResolver) Memberships(ctx context.Context, obj *types.User, roles []types.Role) ([]*types.Membership, error) {
-	memberships, err := obj.Memberships(ctx, r.Clients)
-	if err != nil {
-		return nil, err
-	}
-	withRoles := []*types.Membership{}
-	if len(roles) == 0 {
-		return memberships, nil
-	}
-	for _, m := range memberships {
-		for _, r := range roles {
-			if m.Role == r {
-				withRoles = append(withRoles, m)
-			}
-		}
-	}
-	return withRoles, nil
+	return obj.Memberships(ctx, r.Clients, roles)
 }
 
 // Invites is the resolver for the Invites field.
 func (r *userResolver) Invites(ctx context.Context, obj *types.User, status []types.InviteStatus) ([]*types.Invite, error) {
-	invites, err := dynamo.FindCustomLinksByEntity1[*types.Event, *types.User, *types.Invite](ctx, r.Clients, obj)
-	if err != nil {
-		return nil, err
-	}
-	if len(status) == 0 {
-		return invites, nil
-	}
-	withStatus := []*types.Invite{}
-	for _, i := range invites {
-		for _, s := range status {
-			if i.Status == s {
-				withStatus = append(withStatus, i)
-			}
-		}
-	}
-	return withStatus, nil
+	return obj.Invites(ctx, r.Clients, status)
 }
 
 // Mutation returns MutationResolver implementation.

@@ -48,10 +48,17 @@ func (o Office) Memberships(ctx context.Context) ([]*Membership, error) {
 	return dynamo.FindCustomLinksByEntity1[*User, *Office, *Membership](ctx, *clients.GetDefaultClient(ctx), &o)
 }
 
-// Admins returns the admins for the office
-func (o Office) Admins(ctx context.Context) ([]*User, error) {
-	// load the admins for the office by querying the office_admins GSI
-	return nil, nil
+// Venue returns the venue for an office
+func (o Office) Venue(ctx context.Context, clients clients.Client) ([]*Venue, error) {
+	venues, err := dynamo.FindCustomLinksByEntity1[*Event, *Office, *Venue](
+		ctx,
+		clients,
+		&o,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return venues, nil
 }
 
 type AddressInput struct {
