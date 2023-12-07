@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/dgryski/trifles/uuid"
-	"github.com/entegral/toolbox/clients"
 	"github.com/entegral/toolbox/dynamo"
 )
 
@@ -40,14 +39,13 @@ func NewOffice(ctx context.Context, name, createdBy string, guid, description *s
 
 // Memberships method returns the memberships associated with the office.
 func (o Office) Memberships(ctx context.Context) ([]*Membership, error) {
-	return dynamo.FindCustomLinksByEntity1[*User, *Office, *Membership](ctx, *clients.GetDefaultClient(ctx), &o)
+	return dynamo.FindCustomLinksByEntity1[*Office, *Membership](ctx, &o)
 }
 
 // Venue method returns the venues associated with the office.
-func (o Office) Venue(ctx context.Context, clients clients.Client) ([]*Venue, error) {
-	venues, err := dynamo.FindCustomLinksByEntity1[*Event, *Office, *Venue](
+func (o Office) Venue(ctx context.Context) ([]*Venue, error) {
+	venues, err := dynamo.FindCustomLinksByEntity1[*Office, *Venue](
 		ctx,
-		clients,
 		&o,
 	)
 	if err != nil {

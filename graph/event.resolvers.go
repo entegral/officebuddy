@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/entegral/officebuddy/types"
-	"github.com/entegral/toolbox/clients"
 	"github.com/entegral/toolbox/dynamo"
 	"github.com/entegral/toolbox/helpers"
 )
@@ -42,7 +41,7 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, userEmail string, ev
 	event, err := dynamo.CheckLink[*types.User, *types.Office](&types.User{Email: userEmail}, &types.Office{GUID: eventGUID})
 	switch err.(type) {
 	case nil:
-		return true, event.Unlink(ctx, *clients.GetDefaultClient(ctx))
+		return true, event.Unlink(ctx, event)
 	case dynamo.ErrLinkNotFound:
 		return false, nil
 	default:

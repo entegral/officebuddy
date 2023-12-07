@@ -8,18 +8,17 @@ import (
 	"context"
 
 	"github.com/entegral/officebuddy/types"
-	"github.com/entegral/toolbox/clients"
 	"github.com/entegral/toolbox/dynamo"
 )
 
 // User is the resolver for the User field.
 func (r *inviteResolver) User(ctx context.Context, obj *types.Invite) (*types.User, error) {
-	return obj.User(ctx, *clients.GetDefaultClient(ctx))
+	return obj.User(ctx)
 }
 
 // Event is the resolver for the Event field.
 func (r *inviteResolver) Event(ctx context.Context, obj *types.Invite) (*types.Event, error) {
-	return obj.Event(ctx, *clients.GetDefaultClient(ctx))
+	return obj.Event(ctx)
 }
 
 // PutInvite is the resolver for the putInvite field.

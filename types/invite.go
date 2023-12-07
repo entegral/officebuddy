@@ -6,7 +6,6 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/entegral/toolbox/clients"
 	"github.com/entegral/toolbox/dynamo"
 )
 
@@ -22,8 +21,8 @@ func (i Invite) Type() string {
 }
 
 // User method loads the user entity associated with the invite.
-func (i *Invite) User(ctx context.Context, clients clients.Client) (*User, error) {
-	_, err := i.LoadEntity1(ctx, clients)
+func (i *Invite) User(ctx context.Context) (*User, error) {
+	_, err := i.LoadEntity1(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -31,8 +30,8 @@ func (i *Invite) User(ctx context.Context, clients clients.Client) (*User, error
 }
 
 // Event method loads the event entity associated with the invite.
-func (i *Invite) Event(ctx context.Context, clients clients.Client) (*Event, error) {
-	_, err := i.LoadEntity0(ctx, clients)
+func (i *Invite) Event(ctx context.Context) (*Event, error) {
+	_, err := i.LoadEntity0(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -49,16 +48,14 @@ func NewInvite(ctx context.Context, event Event, user User, opts *NewInviteOpts)
 	if event.CreatedByEmail == "" {
 		return nil, fmt.Errorf("event must have a CreatedByEmail")
 	}
+	dilink, err := dynamo.CheckLink[*Event, *User](&event, &user)
 	invite := &Invite{
-		DiLink: dynamo.DiLink[*Event, *User]{
-			Entity0: &event,
-			Entity1: &user,
-		},
+		DiLink: *dilink,
 	}
 	if opts != nil && opts.Status != nil {
 		invite.Status = *opts.Status
 	}
-	_, _, err := invite.LoadEntities(ctx, *clients.GetDefaultClient(ctx))
+	_, _, err = invite.LoadEntities(ctx)
 	return invite, err
 }
 

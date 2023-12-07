@@ -34,3 +34,4 @@ vendor/
 .vscode
 .envrc
 .env
+__debug*

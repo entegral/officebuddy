@@ -8,8 +8,6 @@ import (
 	"context"
 
 	"github.com/entegral/officebuddy/types"
-	"github.com/entegral/toolbox/clients"
-	"github.com/entegral/toolbox/dynamo"
 )
 
 // PutOffice is the resolver for the putOffice field.
@@ -32,15 +30,7 @@ func (r *mutationResolver) DeleteOffice(ctx context.Context, officeGUID string) 
 
 // Venue is the resolver for the Venue field.
 func (r *officeResolver) Venue(ctx context.Context, obj *types.Office) ([]*types.Venue, error) {
-	venues, err := dynamo.FindCustomLinksByEntity1[*types.Event, *types.Office, *types.Venue](
-		ctx,
-		*clients.GetDefaultClient(ctx),
-		obj,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return venues, nil
+	return obj.Venue(ctx)
 }
 
 // Office is the resolver for the office field.
@@ -62,15 +52,3 @@ func (r *queryResolver) Office(ctx context.Context, officeGUID string) (*types.O
 func (r *Resolver) Office() OfficeResolver { return &officeResolver{r} }
 
 type officeResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *queryResolver) Offices(ctx context.Context, userGUID string) ([]*types.Office, error) {
-	// TODO use GSI0 to query the office memberships for the user
-	// TODO Use that list to query the offices' info
-	return nil, nil
-}

@@ -40,12 +40,12 @@ func (r *queryResolver) Users(ctx context.Context, input []*types.UserFinder) ([
 
 // Memberships is the resolver for the memberships field.
 func (r *userResolver) Memberships(ctx context.Context, obj *types.User, roles []types.Role) ([]*types.Membership, error) {
-	return obj.Memberships(ctx, r.Clients, roles)
+	return obj.Memberships(ctx, roles)
 }
 
 // Invites is the resolver for the Invites field.
 func (r *userResolver) Invites(ctx context.Context, obj *types.User, status []types.InviteStatus) ([]*types.Invite, error) {
-	return obj.Invites(ctx, r.Clients, status)
+	return obj.Invites(ctx, status)
 }
 
 // Mutation returns MutationResolver implementation.

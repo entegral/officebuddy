@@ -9,7 +9,6 @@ import (
 	"errors"
 
 	"github.com/entegral/officebuddy/types"
-	"github.com/entegral/toolbox/clients"
 	"github.com/entegral/toolbox/dynamo"
 )
 
@@ -24,12 +23,12 @@ func (r *mutationResolver) PutVenue(ctx context.Context, officeGUID string, even
 
 // Office is the resolver for the Office field.
 func (r *venueResolver) Office(ctx context.Context, obj *types.Venue) (*types.Office, error) {
-	return obj.Office(ctx, *clients.GetDefaultClient(ctx))
+	return obj.Office(ctx)
 }
 
 // Events is the resolver for the Events field.
 func (r *venueResolver) Events(ctx context.Context, obj *types.Venue) (*types.Event, error) {
-	return obj.Events(ctx, *clients.GetDefaultClient(ctx))
+	return obj.Events(ctx)
 }
 
 // Venue returns VenueResolver implementation.

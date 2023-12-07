@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/dgryski/trifles/uuid"
-	"github.com/entegral/toolbox/clients"
 	"github.com/entegral/toolbox/dynamo"
 )
 
@@ -69,28 +68,9 @@ func NewUser(ctx context.Context, guid, email, fname, lname string) (*User, erro
 	}, nil
 }
 
-// AdminOf returns the offices the user is an admin of.
-func (u *User) AdminOf(ctx context.Context, clients clients.Client) ([]*Office, error) {
-	memberships, err := u.Memberships(ctx, clients, nil)
-	if err != nil {
-		return nil, err
-	}
-	offices := []*Office{}
-	for _, m := range memberships {
-		if m.Role == RoleAdmin {
-			office, err := m.Office(ctx)
-			if err != nil {
-				return nil, err
-			}
-			offices = append(offices, office)
-		}
-	}
-	return offices, nil
-}
-
 // Memberships returns the office memberships for the user.
-func (u *User) Memberships(ctx context.Context, clients clients.Client, roles []Role) ([]*Membership, error) {
-	memberships, err := dynamo.FindCustomLinksByEntity0[*User, *Office, *Membership](ctx, clients, u)
+func (u *User) Memberships(ctx context.Context, roles []Role) ([]*Membership, error) {
+	memberships, err := dynamo.FindCustomLinksByEntity0[*User, *Membership](ctx, u)
 	if err != nil {
 		return nil, err
 	}
@@ -112,10 +92,9 @@ func (u *User) Memberships(ctx context.Context, clients clients.Client, roles []
 }
 
 // Invites returns the invites for the user.
-func (u *User) Invites(ctx context.Context, clients clients.Client, status []InviteStatus) ([]*Invite, error) {
-	invites, err := dynamo.FindCustomLinksByEntity1[*Event, *User, *Invite](
+func (u *User) Invites(ctx context.Context, status []InviteStatus) ([]*Invite, error) {
+	invites, err := dynamo.FindCustomLinksByEntity1[*User, *Invite](
 		ctx,
-		clients,
 		u,
 	)
 	if err != nil {

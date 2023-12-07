@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/entegral/toolbox/clients"
 	"github.com/entegral/toolbox/dynamo"
 )
 
@@ -41,7 +40,7 @@ func (e NewMembershipError) Error() string {
 
 // User method loads the user entity associated with the membership.
 func (m *Membership) User(ctx context.Context) (*User, error) {
-	loaded, err := m.LoadEntity0(ctx, *clients.GetDefaultClient(ctx))
+	loaded, err := m.LoadEntity0(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +52,7 @@ func (m *Membership) User(ctx context.Context) (*User, error) {
 
 // Office method loads the office entity associated with the membership.
 func (m *Membership) Office(ctx context.Context) (*Office, error) {
-	loaded, err := m.LoadEntity1(ctx, *clients.GetDefaultClient(ctx))
+	loaded, err := m.LoadEntity1(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +74,7 @@ func NewMembership(ctx context.Context, email, officeGUID string, role Role) (*M
 	case nil:
 		return membership, nil
 	case dynamo.ErrLinkNotFound:
-		_, _, err := membership.LoadEntities(ctx, *clients.GetDefaultClient(ctx))
+		_, _, err := membership.LoadEntities(ctx)
 		return membership, err
 	default:
 		return nil, newErr
