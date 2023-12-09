@@ -28,11 +28,6 @@ func (r *mutationResolver) DeleteOffice(ctx context.Context, officeGUID string) 
 	return &office, nil
 }
 
-// Venue is the resolver for the Venue field.
-func (r *officeResolver) Venue(ctx context.Context, obj *types.Office) ([]*types.Venue, error) {
-	return obj.Venue(ctx)
-}
-
 // Office is the resolver for the office field.
 func (r *queryResolver) Office(ctx context.Context, officeGUID string) (*types.Office, error) {
 	office := types.Office{
@@ -47,8 +42,3 @@ func (r *queryResolver) Office(ctx context.Context, officeGUID string) (*types.O
 	}
 	return &office, nil
 }
-
-// Office returns OfficeResolver implementation.
-func (r *Resolver) Office() OfficeResolver { return &officeResolver{r} }
-
-type officeResolver struct{ *Resolver }

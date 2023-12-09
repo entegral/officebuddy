@@ -48,7 +48,7 @@ func NewInvite(ctx context.Context, event Event, user User, opts *NewInviteOpts)
 	if event.CreatedByEmail == "" {
 		return nil, fmt.Errorf("event must have a CreatedByEmail")
 	}
-	dilink, err := dynamo.CheckLink[*Event, *User](&event, &user)
+	dilink, err := dynamo.CheckDiLink[*Event, *User](&event, &user)
 	invite := &Invite{
 		DiLink: *dilink,
 	}

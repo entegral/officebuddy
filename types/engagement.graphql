@@ -1,0 +1,21 @@
+type Engagement {
+  User: User!
+  Office: Office!
+  Event: Event!
+}
+
+extend type Query {
+  engagement(
+    user: UserFinder!
+    officeGUID: String!
+    eventGUID: String!
+  ): Engagement!
+}
+
+extend type Mutation {
+  putEngagement(
+    user: UserFinder!
+    officeGUID: String!
+    eventGUID: String!
+  ): Engagement!
+}

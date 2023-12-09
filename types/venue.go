@@ -43,7 +43,7 @@ type NewVenueOpts struct {
 
 // NewVenue creates a new venue.
 func NewVenue(ctx context.Context, event Event, office Office, opts *NewVenueOpts) (*Venue, error) {
-	link, err := dynamo.CheckLink[*Event, *Office](&event, &office)
+	link, err := dynamo.CheckDiLink[*Event, *Office](&event, &office)
 	venue := &Venue{
 		DiLink: *link,
 	}

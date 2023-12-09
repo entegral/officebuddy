@@ -6,11 +6,9 @@ package graph
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/entegral/officebuddy/types"
-	"github.com/entegral/toolbox/dynamo"
 )
 
 // CreatedAt is the resolver for the CreatedAt field.
@@ -21,10 +19,14 @@ func (r *membershipResolver) CreatedAt(ctx context.Context, obj *types.Membershi
 // PutMembership is the resolver for the putMembership field.
 func (r *mutationResolver) PutMembership(ctx context.Context, email string, officeGUID string, role types.Role) (*types.Membership, error) {
 	membership, err := types.NewMembership(ctx, email, officeGUID, role)
-	if errors.Is(err, dynamo.ErrLinkNotFound{}) {
-		return membership, membership.Put(ctx, membership)
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+	err = membership.Put(ctx, membership)
+	if err != nil {
+		return nil, err
+	}
+	return membership, nil
 }
 
 // DeleteMembership is the resolver for the deleteMembership field.
