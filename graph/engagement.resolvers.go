@@ -6,10 +6,9 @@ package graph
 
 import (
 	"context"
-	"errors"
 
+	"github.com/entegral/gobox/dynamo"
 	"github.com/entegral/officebuddy/types"
-	"github.com/entegral/toolbox/dynamo"
 )
 
 // PutEngagement is the resolver for the putEngagement field.
@@ -19,14 +18,18 @@ func (r *mutationResolver) PutEngagement(ctx context.Context, user types.UserFin
 		&types.Office{GUID: officeGUID},
 		&types.Event{GUID: eventGUID},
 	)
-	if err != nil && !errors.Is(err, dynamo.ErrLinkNotFound{}) {
+	engagement := &types.Engagement{
+		TriLink: *trilink,
+	}
+
+	switch err.(type) {
+	case nil:
+		return engagement, nil
+	case dynamo.ErrLinkNotFound:
+		return engagement, engagement.Put(ctx, engagement)
+	default:
 		return nil, err
 	}
-	err = trilink.Put(ctx, trilink)
-	if err != nil {
-		return nil, err
-	}
-	return &types.Engagement{TriLink: *trilink}, nil
 }
 
 // Engagement is the resolver for the engagement field.
@@ -36,12 +39,15 @@ func (r *queryResolver) Engagement(ctx context.Context, user types.UserFinder, o
 		&types.Office{GUID: officeGUID},
 		&types.Event{GUID: eventGUID},
 	)
+	engagement := &types.Engagement{
+		TriLink: *trilink,
+	}
+	loaded, err := engagement.Get(ctx, engagement)
 	if err != nil {
 		return nil, err
 	}
-	err = trilink.Get(ctx, trilink)
-	if err != nil {
-		return nil, err
+	if !loaded {
+		return nil, nil
 	}
-	return &types.Engagement{TriLink: *trilink}, nil
+	return engagement, nil
 }

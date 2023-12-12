@@ -8,9 +8,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/entegral/gobox/dynamo"
 	"github.com/entegral/officebuddy/types"
-	"github.com/entegral/toolbox/dynamo"
-	"github.com/entegral/toolbox/helpers"
 )
 
 // Invites is the resolver for the Invites field.
@@ -27,7 +26,7 @@ func (r *eventResolver) Venue(ctx context.Context, obj *types.Event) ([]*types.V
 func (r *mutationResolver) PutEvents(ctx context.Context, events []*types.EventInput) ([]*types.Event, error) {
 	ret := make([]*types.Event, len(events))
 	for i, event := range events {
-		_, err := helpers.PutItem(ctx, &event.Event)
+		_, err := dynamo.PutItem(ctx, &event.Event)
 		if err != nil {
 			return nil, err
 		}

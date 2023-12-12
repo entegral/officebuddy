@@ -6,7 +6,7 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/entegral/toolbox/dynamo"
+	"github.com/entegral/gobox/dynamo"
 )
 
 // Invite is a struct representing an invitation.

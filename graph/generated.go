@@ -15,7 +15,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/entegral/officebuddy/graph/model"
 	"github.com/entegral/officebuddy/types"
-	types1 "github.com/entegral/toolbox/types"
+	types1 "github.com/entegral/gobox/types"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -44,6 +44,7 @@ type ResolverRoot interface {
 	Membership() MembershipResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
+	User() UserResolver
 }
 
 type DirectiveRoot struct {
@@ -121,12 +122,17 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
+		Cache       func(childComplexity int) int
 		Email       func(childComplexity int) int
 		FirstName   func(childComplexity int) int
 		GUID        func(childComplexity int) int
 		Invites     func(childComplexity int, status []types.InviteStatus) int
 		LastName    func(childComplexity int) int
 		Memberships func(childComplexity int, roles []types.Role) int
+	}
+
+	UserCache struct {
+		HairStyle func(childComplexity int) int
 	}
 
 	Venue struct {
@@ -161,6 +167,9 @@ type QueryResolver interface {
 	Users(ctx context.Context, input []*types.UserFinder) ([]*types.User, error)
 	Engagement(ctx context.Context, user types.UserFinder, officeGUID string, eventGUID string) (*types.Engagement, error)
 	Office(ctx context.Context, officeGUID string) (*types.Office, error)
+}
+type UserResolver interface {
+	Cache(ctx context.Context, obj *types.User) (*types.UserCache, error)
 }
 
 type executableSchema struct {
@@ -553,6 +562,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Users(childComplexity, args["input"].([]*types.UserFinder)), true
 
+	case "User.Cache":
+		if e.complexity.User.Cache == nil {
+			break
+		}
+
+		return e.complexity.User.Cache(childComplexity), true
+
 	case "User.email":
 		if e.complexity.User.Email == nil {
 			break
@@ -604,6 +620,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Memberships(childComplexity, args["roles"].([]types.Role)), true
+
+	case "UserCache.HairStyle":
+		if e.complexity.UserCache.HairStyle == nil {
+			break
+		}
+
+		return e.complexity.UserCache.HairStyle(childComplexity), true
 
 	case "Venue.Events":
 		if e.complexity.Venue.Events == nil {
@@ -873,8 +896,13 @@ extend type Mutation {
   firstName: String!
   lastName: String!
   email: String!
+  Cache: UserCache
   Memberships(roles: [Role!]): [Membership!]
   Invites(status: [InviteStatus!]): [Invite!]
+}
+
+type UserCache {
+  HairStyle: String
 }
 
 input UserSaver {
@@ -1681,6 +1709,8 @@ func (ec *executionContext) fieldContext_Engagement_User(ctx context.Context, fi
 				return ec.fieldContext_User_lastName(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "Cache":
+				return ec.fieldContext_User_Cache(ctx, field)
 			case "Memberships":
 				return ec.fieldContext_User_Memberships(ctx, field)
 			case "Invites":
@@ -2177,6 +2207,8 @@ func (ec *executionContext) fieldContext_Invite_User(ctx context.Context, field 
 				return ec.fieldContext_User_lastName(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "Cache":
+				return ec.fieldContext_User_Cache(ctx, field)
 			case "Memberships":
 				return ec.fieldContext_User_Memberships(ctx, field)
 			case "Invites":
@@ -2336,6 +2368,8 @@ func (ec *executionContext) fieldContext_Membership_User(ctx context.Context, fi
 				return ec.fieldContext_User_lastName(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "Cache":
+				return ec.fieldContext_User_Cache(ctx, field)
 			case "Memberships":
 				return ec.fieldContext_User_Memberships(ctx, field)
 			case "Invites":
@@ -2534,6 +2568,8 @@ func (ec *executionContext) fieldContext_Mutation_Users(ctx context.Context, fie
 				return ec.fieldContext_User_lastName(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "Cache":
+				return ec.fieldContext_User_Cache(ctx, field)
 			case "Memberships":
 				return ec.fieldContext_User_Memberships(ctx, field)
 			case "Invites":
@@ -3510,6 +3546,8 @@ func (ec *executionContext) fieldContext_Query_users(ctx context.Context, field 
 				return ec.fieldContext_User_lastName(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "Cache":
+				return ec.fieldContext_User_Cache(ctx, field)
 			case "Memberships":
 				return ec.fieldContext_User_Memberships(ctx, field)
 			case "Invites":
@@ -3966,6 +4004,51 @@ func (ec *executionContext) fieldContext_User_email(ctx context.Context, field g
 	return fc, nil
 }
 
+func (ec *executionContext) _User_Cache(ctx context.Context, field graphql.CollectedField, obj *types.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_Cache(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().Cache(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*types.UserCache)
+	fc.Result = res
+	return ec.marshalOUserCache2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUserCache(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_Cache(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "HairStyle":
+				return ec.fieldContext_UserCache_HairStyle(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UserCache", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _User_Memberships(ctx context.Context, field graphql.CollectedField, obj *types.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_Memberships(ctx, field)
 	if err != nil {
@@ -4084,6 +4167,47 @@ func (ec *executionContext) fieldContext_User_Invites(ctx context.Context, field
 	if fc.Args, err = ec.field_User_Invites_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserCache_HairStyle(ctx context.Context, field graphql.CollectedField, obj *types.UserCache) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserCache_HairStyle(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HairStyle, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserCache_HairStyle(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserCache",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -7275,6 +7399,39 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "Cache":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_Cache(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "Memberships":
 			field := field
 
@@ -7341,6 +7498,42 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var userCacheImplementors = []string{"UserCache"}
+
+func (ec *executionContext) _UserCache(ctx context.Context, sel ast.SelectionSet, obj *types.UserCache) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userCacheImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UserCache")
+		case "HairStyle":
+			out.Values[i] = ec._UserCache_HairStyle(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8701,6 +8894,13 @@ func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋentegralᚋofficebudd
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUserCache2ᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUserCache(ctx context.Context, sel ast.SelectionSet, v *types.UserCache) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UserCache(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOUserSaver2ᚕᚖgithubᚗcomᚋentegralᚋofficebuddyᚋtypesᚐUserSaverᚄ(ctx context.Context, v interface{}) ([]*types.UserSaver, error) {

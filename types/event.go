@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/dgryski/trifles/uuid"
-	"github.com/entegral/toolbox/dynamo"
-	"github.com/entegral/toolbox/types"
+	"github.com/entegral/gobox/dynamo"
+	"github.com/entegral/gobox/types"
 )
 
 // Event struct represents an event with necessary fields.

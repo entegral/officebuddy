@@ -27,15 +27,20 @@ func (r *mutationResolver) Users(ctx context.Context, input []*types.UserSaver) 
 func (r *queryResolver) Users(ctx context.Context, input []*types.UserFinder) ([]*types.User, error) {
 	ret := []*types.User{}
 	for _, u := range input {
-		err := u.Get(ctx, u)
+		loaded, err := u.Get(ctx, u)
 		if err != nil {
 			return nil, err
 		}
-		if u.GetItemOutput != nil && u.GetItemOutput.Item != nil {
+		if loaded {
 			ret = append(ret, &u.User)
 		}
 	}
 	return ret, nil
+}
+
+// Cache is the resolver for the Cache field.
+func (r *userResolver) Cache(ctx context.Context, obj *types.User) (*types.UserCache, error) {
+	return obj.Cache(ctx)
 }
 
 // Mutation returns MutationResolver implementation.
@@ -44,5 +49,9 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// User returns UserResolver implementation.
+func (r *Resolver) User() UserResolver { return &userResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type userResolver struct{ *Resolver }

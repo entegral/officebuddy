@@ -3,7 +3,7 @@ package types
 import (
 	"context"
 
-	"github.com/entegral/toolbox/dynamo"
+	"github.com/entegral/gobox/dynamo"
 )
 
 type Venue struct {
@@ -55,8 +55,7 @@ func NewVenue(ctx context.Context, event Event, office Office, opts *NewVenueOpt
 	case nil:
 		return venue, nil
 	case dynamo.ErrLinkNotFound:
-		_, _, err := venue.LoadEntities(ctx)
-		return venue, err
+		return venue, venue.Put(ctx, venue)
 	default:
 		return nil, err
 	}

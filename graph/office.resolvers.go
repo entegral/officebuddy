@@ -33,11 +33,11 @@ func (r *queryResolver) Office(ctx context.Context, officeGUID string) (*types.O
 	office := types.Office{
 		GUID: officeGUID,
 	}
-	err := office.Get(ctx, &office)
+	loaded, err := office.Get(ctx, &office)
 	if err != nil {
 		return nil, err
 	}
-	if office.GetItemOutput == nil || office.GetItemOutput.Item == nil {
+	if !loaded {
 		return nil, nil
 	}
 	return &office, nil

@@ -5,9 +5,21 @@ import (
 	"errors"
 
 	"github.com/dgryski/trifles/uuid"
-	"github.com/entegral/toolbox/dynamo"
+	"github.com/entegral/gobox/dynamo"
+	"github.com/sirupsen/logrus"
 )
 
+type UserCache struct {
+	dynamo.MonoLink[*User]
+	HairStyle string `json:"hairStyle,omitempty"`
+}
+
+// Type returns the type of the entity.
+func (u *UserCache) Type() string {
+	return "usercache"
+}
+
+// User is a user.
 type User struct {
 	dynamo.Row
 	GUID      string `json:"guid,omitempty"`
@@ -17,15 +29,37 @@ type User struct {
 	// AdminOf   []*Office `json:"adminOf,omitempty"`
 }
 
+// Type returns the type of the entity.
 func (u *User) Type() string {
 	return "user"
 }
 
+// Cache returns the cache for the user.
+func (u *User) Cache(ctx context.Context) (*UserCache, error) {
+	caches, err := dynamo.FindByEntity0[*User, *UserCache](ctx, u)
+	if err != nil {
+		return nil, err
+	}
+	if len(caches) == 0 {
+		logrus.Warn("no cache found for user, creating")
+		cache := &UserCache{
+			MonoLink:  *dynamo.NewMonoLink[*User](u),
+			HairStyle: "bald",
+		}
+		err = cache.Put(ctx, cache)
+		if err != nil {
+			return nil, err
+		}
+		return cache, nil
+	}
+	return caches[0], nil
+}
+
 // Keys returns the partition key and sort key for the given GSI.
 func (u *User) Keys(gsi int) (partitionKey, sortKey string) {
-	u.Pk = "user:" + u.Email
+	u.Pk = "email:" + u.Email
 	u.Sk = "userinfo"
-	u.Pk1 = "user:" + u.GUID
+	u.Pk1 = "guid:" + u.GUID
 	u.Sk1 = u.Sk
 	switch gsi {
 	case 0:
@@ -70,7 +104,7 @@ func NewUser(ctx context.Context, guid, email, fname, lname string) (*User, erro
 
 // Memberships returns the office memberships for the user.
 func (u *User) Memberships(ctx context.Context, roles []Role) ([]*Membership, error) {
-	memberships, err := dynamo.FindCustomLinksByEntity0[*User, *Membership](ctx, u)
+	memberships, err := dynamo.FindByEntity0[*User, *Membership](ctx, u)
 	if err != nil {
 		return nil, err
 	}

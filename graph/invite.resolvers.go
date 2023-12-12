@@ -7,8 +7,8 @@ package graph
 import (
 	"context"
 
+	"github.com/entegral/gobox/dynamo"
 	"github.com/entegral/officebuddy/types"
-	"github.com/entegral/toolbox/dynamo"
 )
 
 // PutInvite is the resolver for the putInvite field.

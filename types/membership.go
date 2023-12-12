@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/entegral/toolbox/dynamo"
+	"github.com/entegral/gobox/dynamo"
 )
 
 // Membership is a struct representing a membership.
@@ -74,8 +74,7 @@ func NewMembership(ctx context.Context, email, officeGUID string, role Role) (*M
 	case nil:
 		return membership, nil
 	case dynamo.ErrLinkNotFound:
-		_, _, err := membership.LoadEntities(ctx)
-		return membership, err
+		return membership, membership.Put(ctx, membership)
 	default:
 		return nil, newErr
 	}

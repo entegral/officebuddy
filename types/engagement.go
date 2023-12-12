@@ -3,12 +3,17 @@ package types
 import (
 	"context"
 
-	"github.com/entegral/toolbox/dynamo"
+	"github.com/entegral/gobox/dynamo"
 )
 
 // Engagement is a type that allows you to link a user to an office and an event.
 type Engagement struct {
 	dynamo.TriLink[*User, *Office, *Event]
+}
+
+// Type returns the type of the entity.
+func (e *Engagement) Type() string {
+	return "engagement"
 }
 
 // User is the resolver for the user field.
