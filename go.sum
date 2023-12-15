@@ -96,6 +96,12 @@ github.com/entegral/gobox v0.0.0-20231212002015-f645423cce1a h1:OXqjeRVmCXm6ewJc
 github.com/entegral/gobox v0.0.0-20231212002015-f645423cce1a/go.mod h1:5qx7bc2IU++QFS+zypHnOVBukEs+TVnB5JoiXCCxBRE=
 github.com/entegral/gobox v0.0.0-20231212002219-788a24a69c29 h1:Owjles0ssVplPD4MXiwAhFudB1mQc12ItwOT84kFW4M=
 github.com/entegral/gobox v0.0.0-20231212002219-788a24a69c29/go.mod h1:5qx7bc2IU++QFS+zypHnOVBukEs+TVnB5JoiXCCxBRE=
+github.com/entegral/gobox v0.0.0-20231214085831-4f0e7a134072 h1:KemY662VFRR7M3wHwLpH1MygI5WRWcuXahyTofazorE=
+github.com/entegral/gobox v0.0.0-20231214085831-4f0e7a134072/go.mod h1:5qx7bc2IU++QFS+zypHnOVBukEs+TVnB5JoiXCCxBRE=
+github.com/entegral/gobox v0.0.0-20231215225732-b2cb8e5dec7b h1:b0TZEYKrHfcTtXpsch3xfEeIXqqYUMMmNGVlTjyMVcU=
+github.com/entegral/gobox v0.0.0-20231215225732-b2cb8e5dec7b/go.mod h1:5qx7bc2IU++QFS+zypHnOVBukEs+TVnB5JoiXCCxBRE=
+github.com/entegral/gobox v0.0.0-20231215230351-dcb30614a72b h1:j4mM0R203fldUyeUnlYM2DQJuAP+gp2i6ZJybgq3yVg=
+github.com/entegral/gobox v0.0.0-20231215230351-dcb30614a72b/go.mod h1:5qx7bc2IU++QFS+zypHnOVBukEs+TVnB5JoiXCCxBRE=
 github.com/entegral/toolbox v1.0.0 h1:WhAJMexcUGiJiLXOo67lM/pqeoVa0R92kWUmZFR7BHw=
 github.com/entegral/toolbox v1.0.0/go.mod h1:pgR5nPkYfJPzW92lXzb6ZRL3TpqzFahzSlcpsMG5eDU=
 github.com/google/go-cmp v0.5.8 h1:e6P7q2lk1O+qJJb4BtCQXlK8vWEO8V1ZeuEdJNOqZyg=

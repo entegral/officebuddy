@@ -64,12 +64,11 @@ func (m *Membership) Office(ctx context.Context) (*Office, error) {
 
 // NewMembership is a function that creates a new membership. It requires an email, an office GUID, and a role.
 func NewMembership(ctx context.Context, email, officeGUID string, role Role) (*Membership, error) {
-	dilink, newErr := dynamo.CheckDiLink[*User, *Office](&User{Email: email}, &Office{GUID: officeGUID})
 	membership := &Membership{
-		DiLink:    *dilink,
 		Role:      role,
 		CreatedAt: time.Now(),
 	}
+	_, newErr := membership.CheckLink(ctx, membership, &User{Email: email}, &Office{GUID: officeGUID})
 	switch newErr.(type) {
 	case nil:
 		return membership, nil

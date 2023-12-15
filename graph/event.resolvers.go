@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/entegral/gobox/dynamo"
 	"github.com/entegral/officebuddy/types"
@@ -14,12 +13,20 @@ import (
 
 // Invites is the resolver for the Invites field.
 func (r *eventResolver) Invites(ctx context.Context, obj *types.Event) ([]*types.Invite, error) {
-	panic(fmt.Errorf("not implemented: Invites - Invites"))
+	invites, err := dynamo.FindByEntity0[*types.Event, *types.Invite](ctx, obj)
+	if err != nil {
+		return nil, err
+	}
+	return invites, nil
 }
 
 // Venue is the resolver for the Venue field.
 func (r *eventResolver) Venue(ctx context.Context, obj *types.Event) ([]*types.Venue, error) {
-	panic(fmt.Errorf("not implemented: Venue - Venue"))
+	venues, err := dynamo.FindByEntity0[*types.Event, *types.Venue](ctx, obj)
+	if err != nil {
+		return nil, err
+	}
+	return venues, nil
 }
 
 // PutEvents is the resolver for the putEvents field.
@@ -37,15 +44,12 @@ func (r *mutationResolver) PutEvents(ctx context.Context, events []*types.EventI
 
 // DeleteEvent is the resolver for the deleteEvent field.
 func (r *mutationResolver) DeleteEvent(ctx context.Context, userEmail string, eventGUID string) (bool, error) {
-	event, err := dynamo.CheckDiLink[*types.User, *types.Office](&types.User{Email: userEmail}, &types.Office{GUID: eventGUID})
-	switch err.(type) {
-	case nil:
-		return true, event.Unlink(ctx, event)
-	case dynamo.ErrLinkNotFound:
-		return false, nil
-	default:
+	event := &types.Event{GUID: eventGUID}
+	err := event.Delete(ctx, event)
+	if err != nil {
 		return false, err
 	}
+	return true, nil
 }
 
 // Event returns EventResolver implementation.

@@ -13,15 +13,14 @@ import (
 
 // PutEngagement is the resolver for the putEngagement field.
 func (r *mutationResolver) PutEngagement(ctx context.Context, user types.UserFinder, officeGUID string, eventGUID string) (*types.Engagement, error) {
-	trilink, err := dynamo.CheckTriLink[*types.User, *types.Office, *types.Event](
+	engagement := &types.Engagement{}
+	_, err := engagement.CheckLink(
+		ctx,
+		engagement,
 		&user.User,
 		&types.Office{GUID: officeGUID},
 		&types.Event{GUID: eventGUID},
 	)
-	engagement := &types.Engagement{
-		TriLink: *trilink,
-	}
-
 	switch err.(type) {
 	case nil:
 		return engagement, nil
@@ -34,15 +33,14 @@ func (r *mutationResolver) PutEngagement(ctx context.Context, user types.UserFin
 
 // Engagement is the resolver for the engagement field.
 func (r *queryResolver) Engagement(ctx context.Context, user types.UserFinder, officeGUID string, eventGUID string) (*types.Engagement, error) {
-	trilink, err := dynamo.CheckTriLink[*types.User, *types.Office, *types.Event](
+	engagement := &types.Engagement{}
+	loaded, err := engagement.CheckLink(
+		ctx,
+		engagement,
 		&user.User,
 		&types.Office{GUID: officeGUID},
 		&types.Event{GUID: eventGUID},
 	)
-	engagement := &types.Engagement{
-		TriLink: *trilink,
-	}
-	loaded, err := engagement.Get(ctx, engagement)
 	if err != nil {
 		return nil, err
 	}

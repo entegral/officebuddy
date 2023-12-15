@@ -5,7 +5,7 @@ go 1.21.1
 require (
 	github.com/99designs/gqlgen v0.17.40
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.26.6
-	github.com/entegral/gobox v0.0.0-20231212002219-788a24a69c29
+	github.com/entegral/gobox v0.0.0-20231215230351-dcb30614a72b
 	github.com/entegral/toolbox v1.0.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/vektah/gqlparser/v2 v2.5.10

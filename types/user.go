@@ -43,7 +43,7 @@ func (u *User) Cache(ctx context.Context) (*UserCache, error) {
 	if len(caches) == 0 {
 		logrus.Warn("no cache found for user, creating")
 		cache := &UserCache{
-			MonoLink:  *dynamo.NewMonoLink[*User](u),
+			MonoLink:  dynamo.NewMonoLink(u),
 			HairStyle: "bald",
 		}
 		err = cache.Put(ctx, cache)
@@ -127,7 +127,7 @@ func (u *User) Memberships(ctx context.Context, roles []Role) ([]*Membership, er
 
 // Invites returns the invites for the user.
 func (u *User) Invites(ctx context.Context, status []InviteStatus) ([]*Invite, error) {
-	invites, err := dynamo.FindCustomLinksByEntity1[*User, *Invite](
+	invites, err := dynamo.FindByEntity1[*User, *Invite](
 		ctx,
 		u,
 	)

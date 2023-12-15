@@ -13,11 +13,10 @@ import (
 
 // PutInvite is the resolver for the putInvite field.
 func (r *mutationResolver) PutInvite(ctx context.Context, userEmail string, eventGUID string, status types.InviteStatus) (*types.Invite, error) {
-	dilink, newErr := dynamo.CheckDiLink[*types.Event, *types.User](&types.Event{CreatedByEmail: userEmail, GUID: eventGUID}, &types.User{Email: userEmail})
 	invite := &types.Invite{
-		DiLink: *dilink,
 		Status: status,
 	}
+	_, newErr := invite.CheckLink(ctx, invite, &types.Event{GUID: eventGUID}, &types.User{Email: userEmail})
 	switch newErr.(type) {
 	case nil:
 		// invite already exists
