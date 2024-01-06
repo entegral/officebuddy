@@ -7,45 +7,25 @@ package graph
 import (
 	"context"
 
-	"github.com/entegral/gobox/dynamo"
 	"github.com/entegral/officebuddy/types"
 )
 
 // PutEngagement is the resolver for the putEngagement field.
 func (r *mutationResolver) PutEngagement(ctx context.Context, user types.UserFinder, officeGUID string, eventGUID string) (*types.Engagement, error) {
 	engagement := &types.Engagement{}
-	_, err := engagement.CheckLink(
-		ctx,
-		engagement,
-		&user.User,
-		&types.Office{GUID: officeGUID},
-		&types.Event{GUID: eventGUID},
-	)
-	switch err.(type) {
-	case nil:
-		return engagement, nil
-	case dynamo.ErrLinkNotFound:
+	isValid, err := engagement.CheckLink(ctx, engagement, &user.User, &types.Office{GUID: officeGUID}, &types.Event{GUID: eventGUID})
+	if isValid {
 		return engagement, engagement.Put(ctx, engagement)
-	default:
-		return nil, err
 	}
+	return nil, err
 }
 
 // Engagement is the resolver for the engagement field.
 func (r *queryResolver) Engagement(ctx context.Context, user types.UserFinder, officeGUID string, eventGUID string) (*types.Engagement, error) {
 	engagement := &types.Engagement{}
-	loaded, err := engagement.CheckLink(
-		ctx,
-		engagement,
-		&user.User,
-		&types.Office{GUID: officeGUID},
-		&types.Event{GUID: eventGUID},
-	)
-	if err != nil {
-		return nil, err
+	isValid, err := engagement.CheckLink(ctx, engagement, &user.User, &types.Office{GUID: officeGUID}, &types.Event{GUID: eventGUID})
+	if isValid {
+		return engagement, nil
 	}
-	if !loaded {
-		return nil, nil
-	}
-	return engagement, nil
+	return nil, err
 }

@@ -31,7 +31,7 @@ func (e *Event) Type() string {
 }
 
 // Keys method generates and returns the primary and secondary keys for the event based on the given Global Secondary Index (gsi).
-func (e *Event) Keys(gsi int) (string, string) {
+func (e *Event) Keys(gsi int) (string, string, error) {
 	if e.GUID == "" {
 		e.GUID = uuid.UUIDv4() // Generate a new UUID if it doesn't exist.
 	}
@@ -43,13 +43,13 @@ func (e *Event) Keys(gsi int) (string, string) {
 	e.Sk2 = "end:" + e.End.String()
 	switch gsi {
 	case 0:
-		return e.Pk, e.Sk
+		return e.Pk, e.Sk, nil
 	case 1:
-		return e.Pk1, e.Sk1
+		return e.Pk1, e.Sk1, nil
 	case 2:
-		return e.Pk2, e.Sk2
+		return e.Pk2, e.Sk2, nil
 	}
-	return "", ""
+	return "", "", nil
 }
 
 // NewEventOpts struct is used to pass options when creating a new event.

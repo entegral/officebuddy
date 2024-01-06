@@ -16,24 +16,20 @@ func (r *mutationResolver) PutInvite(ctx context.Context, userEmail string, even
 	invite := &types.Invite{
 		Status: status,
 	}
-	_, newErr := invite.CheckLink(ctx, invite, &types.Event{GUID: eventGUID}, &types.User{Email: userEmail})
-	switch newErr.(type) {
-	case nil:
-		// invite already exists
-		return invite, nil
-	case dynamo.ErrLinkNotFound:
-		// invite does not exist
+	event := types.Event{GUID: eventGUID, CreatedByEmail: userEmail}
+	user := types.User{Email: userEmail}
+	isValid, err := invite.CheckLink(ctx, invite, &event, &user)
+	if isValid {
 		return invite, invite.Put(ctx, invite)
-	default:
-		return nil, newErr
 	}
+	return nil, err
 }
 
 // DeleteInvite is the resolver for the deleteInvite field.
 func (r *mutationResolver) DeleteInvite(ctx context.Context, userEmail string, eventGUID string) (*types.Invite, error) {
-	invite, err := types.NewInvite(ctx, types.Event{CreatedByEmail: userEmail, GUID: eventGUID}, types.User{Email: userEmail}, nil)
-	if err != nil {
-		return nil, err
+	invite := &types.Invite{
+		DiLink: *dynamo.NewDiLink(&types.Event{GUID: eventGUID, CreatedByEmail: userEmail}, &types.User{Email: userEmail}),
 	}
-	return invite, invite.Delete(ctx, invite)
+	return nil, invite.Delete(ctx, invite)
+
 }

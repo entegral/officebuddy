@@ -42,8 +42,9 @@ func (u *User) Cache(ctx context.Context) (*UserCache, error) {
 	}
 	if len(caches) == 0 {
 		logrus.Warn("no cache found for user, creating")
+		monolink := dynamo.NewMonoLink(u)
 		cache := &UserCache{
-			MonoLink:  dynamo.NewMonoLink(u),
+			MonoLink:  *monolink,
 			HairStyle: "bald",
 		}
 		err = cache.Put(ctx, cache)
@@ -56,18 +57,18 @@ func (u *User) Cache(ctx context.Context) (*UserCache, error) {
 }
 
 // Keys returns the partition key and sort key for the given GSI.
-func (u *User) Keys(gsi int) (partitionKey, sortKey string) {
+func (u *User) Keys(gsi int) (partitionKey, sortKey string, err error) {
 	u.Pk = "email:" + u.Email
 	u.Sk = "userinfo"
 	u.Pk1 = "guid:" + u.GUID
 	u.Sk1 = u.Sk
 	switch gsi {
 	case 0:
-		return u.Pk, u.Sk
+		return u.Pk, u.Sk, nil
 	case 1:
-		return u.Pk1, u.Sk1
+		return u.Pk1, u.Sk1, nil
 	default:
-		return "", ""
+		return "", "", nil
 	}
 }
 

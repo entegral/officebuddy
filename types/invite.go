@@ -43,19 +43,6 @@ type NewInviteOpts struct {
 	Status *InviteStatus // Status is a pointer to an InviteStatus value.
 }
 
-// NewInvite is a function that creates a new invite. It requires an event, a user, and options for the invite.
-func NewInvite(ctx context.Context, event Event, user User, opts *NewInviteOpts) (*Invite, error) {
-	if event.CreatedByEmail == "" {
-		return nil, fmt.Errorf("event must have a CreatedByEmail")
-	}
-	invite := &Invite{}
-	if opts != nil && opts.Status != nil {
-		invite.Status = *opts.Status
-	}
-	_, err := invite.CheckLink(ctx, invite, &event, &user)
-	return invite, err
-}
-
 // InviteStatus is a type representing the status of an invitation.
 type InviteStatus string
 

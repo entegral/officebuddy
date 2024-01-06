@@ -18,6 +18,9 @@ func (e *Engagement) Type() string {
 
 // User is the resolver for the user field.
 func (e *Engagement) User(ctx context.Context) (*User, error) {
+	if e.Entity0 != nil {
+		return e.Entity0, nil
+	}
 	loaded, err := e.LoadEntity0(ctx)
 	if err != nil {
 		return nil, err
@@ -30,6 +33,9 @@ func (e *Engagement) User(ctx context.Context) (*User, error) {
 
 // Office is the resolver for the office field.
 func (e *Engagement) Office(ctx context.Context) (*Office, error) {
+	if e.Entity1 != nil {
+		return e.Entity1, nil
+	}
 	loaded, err := e.LoadEntity1(ctx)
 	if err != nil {
 		return nil, err
@@ -42,6 +48,9 @@ func (e *Engagement) Office(ctx context.Context) (*Office, error) {
 
 // Event is the resolver for the event field.
 func (e *Engagement) Event(ctx context.Context) (*Event, error) {
+	if e.Entity2 != nil {
+		return e.Entity2, nil
+	}
 	loaded, err := e.LoadEntity2(ctx)
 	if err != nil {
 		return nil, err

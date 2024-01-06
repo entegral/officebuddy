@@ -69,13 +69,13 @@ type Address struct {
 }
 
 // Keys method returns the primary key and the sort key of the office.
-func (o Office) Keys(gsi int) (string, string) {
+func (o Office) Keys(gsi int) (string, string, error) {
 	o.Pk = "guid:" + o.GUID // Pk is the primary key of the office.
 	o.Sk = "info"           // Sk is the sort key of the office.
 	switch gsi {
 	case 0:
-		return o.Pk, o.Sk
+		return o.Pk, o.Sk, nil
 	default:
-		return "", "" // If the gsi is not 0, return empty strings.
+		return "", "", nil // If the gsi is not 0, return empty strings.
 	}
 }

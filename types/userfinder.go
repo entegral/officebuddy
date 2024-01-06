@@ -21,7 +21,10 @@ type UserFinder struct {
 func (u *UserFinder) LoadByGUID(ctx context.Context) (bool, error) {
 	tn := u.TableName(ctx)
 	in := dynamo.GSI1.String()
-	pk1, sk1 := u.Keys(1)
+	pk1, sk1, err := u.Keys(1)
+	if err != nil {
+		return false, err
+	}
 	kce := "pk1 = :pk1 and sk1 = :sk1"
 	i := dynamodb.QueryInput{
 		TableName:              &tn,
