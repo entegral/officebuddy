@@ -39,14 +39,15 @@ func NewOffice(ctx context.Context, name, createdBy string, guid, description *s
 
 // Memberships method returns the memberships associated with the office.
 func (o Office) Memberships(ctx context.Context) ([]*Membership, error) {
-	return dynamo.FindByEntity1[*Office, *Membership](ctx, &o)
+	return dynamo.FindLinksByEntity1[*Office, *Membership](ctx, &o, "Membership")
 }
 
 // Venue method returns the venues associated with the office.
 func (o Office) Venue(ctx context.Context) ([]*Venue, error) {
-	venues, err := dynamo.FindByEntity1[*Office, *Venue](
+	venues, err := dynamo.FindLinksByEntity1[*Office, *Venue](
 		ctx,
 		&o,
+		"Venue",
 	)
 	if err != nil {
 		return nil, err

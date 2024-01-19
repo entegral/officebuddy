@@ -4,9 +4,9 @@ go 1.21.1
 
 require (
 	github.com/99designs/gqlgen v0.17.40
+	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.12.12
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.26.6
-	github.com/entegral/gobox v0.0.0-20240106201021-49f265ccfb2a
-	github.com/entegral/toolbox v1.0.0
+	github.com/entegral/gobox v0.0.5-0.20240119234018-2391a181d319
 	github.com/sirupsen/logrus v1.9.3
 	github.com/vektah/gqlparser/v2 v2.5.10
 )
@@ -16,7 +16,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.5.4 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.26.1 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.16.12 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.12.12 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.10 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.9 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.9 // indirect

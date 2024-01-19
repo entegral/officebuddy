@@ -13,19 +13,22 @@ import (
 // PutEngagement is the resolver for the putEngagement field.
 func (r *mutationResolver) PutEngagement(ctx context.Context, user types.UserFinder, officeGUID string, eventGUID string) (*types.Engagement, error) {
 	engagement := &types.Engagement{}
-	isValid, err := engagement.CheckLink(ctx, engagement, &user.User, &types.Office{GUID: officeGUID}, &types.Event{GUID: eventGUID})
-	if isValid {
-		return engagement, engagement.Put(ctx, engagement)
+	_, err := engagement.CheckLink(ctx, engagement, &user.User, &types.Office{GUID: officeGUID}, &types.Event{GUID: eventGUID})
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+	return engagement, engagement.Put(ctx, engagement)
 }
 
 // Engagement is the resolver for the engagement field.
 func (r *queryResolver) Engagement(ctx context.Context, user types.UserFinder, officeGUID string, eventGUID string) (*types.Engagement, error) {
 	engagement := &types.Engagement{}
-	isValid, err := engagement.CheckLink(ctx, engagement, &user.User, &types.Office{GUID: officeGUID}, &types.Event{GUID: eventGUID})
-	if isValid {
+	linkExists, err := engagement.CheckLink(ctx, engagement, &user.User, &types.Office{GUID: officeGUID}, &types.Event{GUID: eventGUID})
+	if err != nil {
+		return nil, err
+	}
+	if linkExists {
 		return engagement, nil
 	}
-	return nil, err
+	return nil, nil
 }

@@ -18,11 +18,11 @@ func (r *mutationResolver) PutInvite(ctx context.Context, userEmail string, even
 	}
 	event := types.Event{GUID: eventGUID, CreatedByEmail: userEmail}
 	user := types.User{Email: userEmail}
-	isValid, err := invite.CheckLink(ctx, invite, &event, &user)
-	if isValid {
-		return invite, invite.Put(ctx, invite)
+	_, err := invite.CheckLink(ctx, invite, &event, &user)
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+	return invite, invite.Put(ctx, invite)
 }
 
 // DeleteInvite is the resolver for the deleteInvite field.
@@ -31,5 +31,4 @@ func (r *mutationResolver) DeleteInvite(ctx context.Context, userEmail string, e
 		DiLink: *dynamo.NewDiLink(&types.Event{GUID: eventGUID, CreatedByEmail: userEmail}, &types.User{Email: userEmail}),
 	}
 	return nil, invite.Delete(ctx, invite)
-
 }

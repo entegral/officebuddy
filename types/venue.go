@@ -13,7 +13,7 @@ type Venue struct {
 }
 
 func (v *Venue) Type() string {
-	return "venue"
+	return "Venue"
 }
 
 func (v *Venue) Office(ctx context.Context) (*Office, error) {
@@ -45,16 +45,12 @@ type NewVenueOpts struct {
 func NewVenue(ctx context.Context, event Event, office Office, opts *NewVenueOpts) (*Venue, error) {
 	venue := &Venue{}
 	_, err := venue.CheckLink(ctx, venue, &event, &office)
+	if err != nil {
+		return nil, err
+	}
 	if opts != nil {
 		venue.Room = opts.Room
 		venue.Instructions = opts.Instructions
 	}
-	switch err.(type) {
-	case nil:
-		return venue, nil
-	case dynamo.ErrLinkNotFound:
-		return venue, venue.Put(ctx, venue)
-	default:
-		return nil, err
-	}
+	return venue, nil
 }

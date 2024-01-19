@@ -13,9 +13,9 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
+	types1 "github.com/entegral/gobox/types"
 	"github.com/entegral/officebuddy/graph/model"
 	"github.com/entegral/officebuddy/types"
-	types1 "github.com/entegral/gobox/types"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -44,7 +44,6 @@ type ResolverRoot interface {
 	Membership() MembershipResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
-	User() UserResolver
 }
 
 type DirectiveRoot struct {
@@ -167,9 +166,6 @@ type QueryResolver interface {
 	Users(ctx context.Context, input []*types.UserFinder) ([]*types.User, error)
 	Engagement(ctx context.Context, user types.UserFinder, officeGUID string, eventGUID string) (*types.Engagement, error)
 	Office(ctx context.Context, officeGUID string) (*types.Office, error)
-}
-type UserResolver interface {
-	Cache(ctx context.Context, obj *types.User) (*types.UserCache, error)
 }
 
 type executableSchema struct {
@@ -2000,7 +1996,7 @@ func (ec *executionContext) _Event_start(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(types1.DateTime)
 	fc.Result = res
-	return ec.marshalNDateTime2githubᚗcomᚋentegralᚋtoolboxᚋtypesᚐDateTime(ctx, field.Selections, res)
+	return ec.marshalNDateTime2githubᚗcomᚋentegralᚋgoboxᚋtypesᚐDateTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Event_start(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2044,7 +2040,7 @@ func (ec *executionContext) _Event_end(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.(types1.DateTime)
 	fc.Result = res
-	return ec.marshalNDateTime2githubᚗcomᚋentegralᚋtoolboxᚋtypesᚐDateTime(ctx, field.Selections, res)
+	return ec.marshalNDateTime2githubᚗcomᚋentegralᚋgoboxᚋtypesᚐDateTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Event_end(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4018,7 +4014,7 @@ func (ec *executionContext) _User_Cache(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().Cache(rctx, obj)
+		return obj.Cache(ctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4037,7 +4033,7 @@ func (ec *executionContext) fieldContext_User_Cache(ctx context.Context, field g
 		Object:     "User",
 		Field:      field,
 		IsMethod:   true,
-		IsResolver: true,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "HairStyle":
@@ -6304,7 +6300,7 @@ func (ec *executionContext) unmarshalInputEventInput(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("start"))
-			data, err := ec.unmarshalNDateTime2githubᚗcomᚋentegralᚋtoolboxᚋtypesᚐDateTime(ctx, v)
+			data, err := ec.unmarshalNDateTime2githubᚗcomᚋentegralᚋgoboxᚋtypesᚐDateTime(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6313,7 +6309,7 @@ func (ec *executionContext) unmarshalInputEventInput(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("end"))
-			data, err := ec.unmarshalNDateTime2githubᚗcomᚋentegralᚋtoolboxᚋtypesᚐDateTime(ctx, v)
+			data, err := ec.unmarshalNDateTime2githubᚗcomᚋentegralᚋgoboxᚋtypesᚐDateTime(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -8013,13 +8009,13 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNDateTime2githubᚗcomᚋentegralᚋtoolboxᚋtypesᚐDateTime(ctx context.Context, v interface{}) (types1.DateTime, error) {
+func (ec *executionContext) unmarshalNDateTime2githubᚗcomᚋentegralᚋgoboxᚋtypesᚐDateTime(ctx context.Context, v interface{}) (types1.DateTime, error) {
 	var res types1.DateTime
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDateTime2githubᚗcomᚋentegralᚋtoolboxᚋtypesᚐDateTime(ctx context.Context, sel ast.SelectionSet, v types1.DateTime) graphql.Marshaler {
+func (ec *executionContext) marshalNDateTime2githubᚗcomᚋentegralᚋgoboxᚋtypesᚐDateTime(ctx context.Context, sel ast.SelectionSet, v types1.DateTime) graphql.Marshaler {
 	return v
 }
 

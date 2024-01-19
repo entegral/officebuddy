@@ -16,7 +16,7 @@ type Membership struct {
 
 // Type method returns the type of the struct, in this case "membership".
 func (m *Membership) Type() string {
-	return "membership"
+	return "Membership"
 }
 
 // NewMembershipErrors is a type representing errors that can occur when creating a new membership.
@@ -69,14 +69,10 @@ func NewMembership(ctx context.Context, email, officeGUID string, role Role) (*M
 		CreatedAt: time.Now(),
 	}
 	_, newErr := membership.CheckLink(ctx, membership, &User{Email: email}, &Office{GUID: officeGUID})
-	switch newErr.(type) {
-	case nil:
-		return membership, nil
-	case dynamo.ErrLinkNotFound:
-		return membership, membership.Put(ctx, membership)
-	default:
+	if newErr != nil {
 		return nil, newErr
 	}
+	return membership, nil
 }
 
 // Role is a type representing the role of a member.

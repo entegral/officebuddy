@@ -13,16 +13,12 @@ import (
 
 // Invites is the resolver for the Invites field.
 func (r *eventResolver) Invites(ctx context.Context, obj *types.Event) ([]*types.Invite, error) {
-	invites, err := dynamo.FindByEntity0[*types.Event, *types.Invite](ctx, obj)
-	if err != nil {
-		return nil, err
-	}
-	return invites, nil
+	return dynamo.FindLinksByEntity0[*types.Event, *types.Invite](ctx, obj, "Invite")
 }
 
 // Venue is the resolver for the Venue field.
 func (r *eventResolver) Venue(ctx context.Context, obj *types.Event) ([]*types.Venue, error) {
-	venues, err := dynamo.FindByEntity0[*types.Event, *types.Venue](ctx, obj)
+	venues, err := dynamo.FindLinksByEntity0[*types.Event, *types.Venue](ctx, obj, "Venue")
 	if err != nil {
 		return nil, err
 	}

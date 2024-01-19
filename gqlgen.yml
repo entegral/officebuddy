@@ -67,7 +67,7 @@ resolver:
 # if they match it will use them, otherwise it will generate them.
 autobind:
  - "github.com/entegral/officebuddy/types"
- - "github.com/entegral/toolbox/types"
+ - "github.com/entegral/gobox/types"
 
 # This section declares type mapping between the GraphQL and go type systems
 #

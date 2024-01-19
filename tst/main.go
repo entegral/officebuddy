@@ -1,25 +1,41 @@
 package main
 
-import "github.com/sirupsen/logrus"
+import (
+	"errors"
 
-type Thing struct {
-	*Thang
-}
+	"github.com/sirupsen/logrus"
+)
 
 type Thang struct {
 	Name string
 }
 
-func (t *Thang) Tst() string {
-	if t == nil {
-		t = &Thang{Name: "im not nil anymore!"}
-		return t.Name
-	}
-	return "its not nil"
+// Error method returns the error message of a Thang
+func (t Thang) Error() string {
+	return t.Name
 }
 
 func main() {
-	t := Thing{}
-	o := t.Tst()
-	logrus.Println(o)
+	ErrorRun1()
+	ErrorRun2()
+}
+
+func ErrorRun1() {
+	t := &Thang{}
+	var errThang *Thang
+	if errors.As(t, &errThang) {
+		logrus.Println("Thang is the error")
+	} else {
+		logrus.Println("Thang is not the error")
+	}
+}
+
+func ErrorRun2() {
+	t := &Thang{}
+	var errThang *Thang
+	if errors.As(t, &errThang) {
+		logrus.Println("Thang is the error")
+	} else {
+		logrus.Println("Thang is not the error")
+	}
 }

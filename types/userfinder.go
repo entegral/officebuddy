@@ -2,9 +2,14 @@ package types
 
 import (
 	"context"
+	"errors"
 
+	"log/slog"
+
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	awstypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/entegral/gobox/clients"
 	"github.com/entegral/gobox/dynamo"
 )
 
@@ -35,12 +40,22 @@ func (u *UserFinder) LoadByGUID(ctx context.Context) (bool, error) {
 			":sk1": &awstypes.AttributeValueMemberS{Value: sk1},
 		},
 	}
-	users, err := dynamo.Query[User](ctx, i)
+	client := clients.GetDefaultClient(ctx)
+	out, err := client.Dynamo().Query(ctx, &i)
 	if err != nil {
 		return false, err
 	}
-	if len(users) == 0 {
+	if out.Count == 0 {
 		return false, nil
+	}
+	users := make([]User, len(out.Items))
+	err = attributevalue.UnmarshalListOfMaps(out.Items, &users)
+	if err != nil {
+		return false, err
+	}
+	if len(users) > 1 {
+		slog.With("users", users).Error("more than one user found, returning the first")
+		return true, errors.New("more than one user found")
 	}
 	u.User = users[0]
 	return true, err

@@ -16,7 +16,7 @@ type UserCache struct {
 
 // Type returns the type of the entity.
 func (u *UserCache) Type() string {
-	return "usercache"
+	return "UserCache"
 }
 
 // User is a user.
@@ -31,29 +31,22 @@ type User struct {
 
 // Type returns the type of the entity.
 func (u *User) Type() string {
-	return "user"
+	return "User"
 }
 
 // Cache returns the cache for the user.
 func (u *User) Cache(ctx context.Context) (*UserCache, error) {
-	caches, err := dynamo.FindByEntity0[*User, *UserCache](ctx, u)
+	uc := UserCache{
+		MonoLink: *dynamo.NewMonoLink(u),
+	}
+	loaded, err := uc.Get(ctx, &uc)
 	if err != nil {
+		logrus.WithError(err).Error("failed to get user cache")
+	}
+	if !loaded {
 		return nil, err
 	}
-	if len(caches) == 0 {
-		logrus.Warn("no cache found for user, creating")
-		monolink := dynamo.NewMonoLink(u)
-		cache := &UserCache{
-			MonoLink:  *monolink,
-			HairStyle: "bald",
-		}
-		err = cache.Put(ctx, cache)
-		if err != nil {
-			return nil, err
-		}
-		return cache, nil
-	}
-	return caches[0], nil
+	return &uc, nil
 }
 
 // Keys returns the partition key and sort key for the given GSI.
@@ -105,7 +98,7 @@ func NewUser(ctx context.Context, guid, email, fname, lname string) (*User, erro
 
 // Memberships returns the office memberships for the user.
 func (u *User) Memberships(ctx context.Context, roles []Role) ([]*Membership, error) {
-	memberships, err := dynamo.FindByEntity0[*User, *Membership](ctx, u)
+	memberships, err := dynamo.FindLinksByEntity0[*User, *Membership](ctx, u, "Membership")
 	if err != nil {
 		return nil, err
 	}
@@ -128,9 +121,10 @@ func (u *User) Memberships(ctx context.Context, roles []Role) ([]*Membership, er
 
 // Invites returns the invites for the user.
 func (u *User) Invites(ctx context.Context, status []InviteStatus) ([]*Invite, error) {
-	invites, err := dynamo.FindByEntity1[*User, *Invite](
+	invites, err := dynamo.FindLinksByEntity1[*User, *Invite](
 		ctx,
 		u,
+		"Invite",
 	)
 	if err != nil {
 		return nil, err

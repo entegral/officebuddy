@@ -38,20 +38,11 @@ func (r *queryResolver) Users(ctx context.Context, input []*types.UserFinder) ([
 	return ret, nil
 }
 
-// Cache is the resolver for the Cache field.
-func (r *userResolver) Cache(ctx context.Context, obj *types.User) (*types.UserCache, error) {
-	return obj.Cache(ctx)
-}
-
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-// User returns UserResolver implementation.
-func (r *Resolver) User() UserResolver { return &userResolver{r} }
-
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-type userResolver struct{ *Resolver }

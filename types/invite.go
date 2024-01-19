@@ -17,7 +17,7 @@ type Invite struct {
 
 // Type method returns the type of the struct, in this case "invite".
 func (i Invite) Type() string {
-	return "invite"
+	return "Invite"
 }
 
 // User method loads the user entity associated with the invite.
