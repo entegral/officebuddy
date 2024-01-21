@@ -90,9 +90,8 @@ func NewEvent(ctx context.Context, title, description string, start, stop types.
 // EventDetails struct represents the details of an event.
 type EventDetails struct {
 	dynamo.MonoLink[*Event]
-	CreatedByEmail string `json:"createdByEmail"` // The email of the user who created the event.
-	Title          string `json:"title"`          // The title of the event.
-	Description    string `json:"description"`    // The description of the event.
+	Title       string `json:"title"`       // The title of the event.
+	Description string `json:"description"` // The description of the event.
 }
 
 // Type method satisfies the Typeable interface.
