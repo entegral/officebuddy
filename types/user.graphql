@@ -1,10 +1,14 @@
 type User {
   guid: String!
-  firstName: String!
-  lastName: String!
   email: String!
+  Details: UserDetails!
   Memberships(roles: [Role!]): [Membership!]
   Invites(status: [InviteStatus!]): [Invite!]
+}
+
+type UserDetails {
+  firstName: String!
+  lastName: String!
 }
 
 input UserSaver {

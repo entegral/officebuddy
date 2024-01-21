@@ -16,8 +16,8 @@ type User struct {
 	Email string `json:"email,omitempty"`
 	// AdminOf   []*Office `json:"adminOf,omitempty"`
 
-	// MonoLinks
-	Details *UserDetails `json:"details,omitempty" dynamoav:"-"`
+	// monolinks - these are useful to cut down on dynamo calls, but they must be un-exported (lowercase) to prevent recursion issues.
+	detailCache *UserDetails
 }
 
 // Type returns the type of the entity.
@@ -55,12 +55,6 @@ func NewUser(ctx context.Context, guid, email, fname, lname string) (*User, erro
 	if email == "" {
 		return nil, ErrInvalidEmail
 	}
-	if fname == "" {
-		return nil, ErrInvalidFirstName
-	}
-	if lname == "" {
-		return nil, ErrInvalidLastName
-	}
 	if guid == "" {
 		guid = uuid.UUIDv4()
 	}
@@ -68,31 +62,42 @@ func NewUser(ctx context.Context, guid, email, fname, lname string) (*User, erro
 		Email: email,
 		GUID:  guid,
 	}
-	details := &UserDetails{
-		MonoLink:  *dynamo.NewMonoLink(user),
-		FirstName: fname,
-		LastName:  lname,
-	}
-	user.Details = details
 	return user, nil
 }
 
-// GetDetails returns the user details, if it isnt present, it loads them from dynamo.
-func (u *User) GetDetails(ctx context.Context) (*UserDetails, error) {
-	if u.Details != nil {
-		return u.Details, nil
+// SetUserDetails creates a new user details.
+func (u *User) SetUserDetails(ctx context.Context, fname, lname string) (*UserDetails, error) {
+	if fname == "" {
+		return nil, ErrInvalidFirstName
 	}
-	u.Details = &UserDetails{
+	if lname == "" {
+		return nil, ErrInvalidLastName
+	}
+	details := &UserDetails{
+		MonoLink:  *dynamo.NewMonoLink(u),
+		FirstName: fname,
+		LastName:  lname,
+	}
+	return details, nil
+}
+
+// Details returns the user details, if it isnt present, it loads them from dynamo.
+func (u *User) Details(ctx context.Context) (*UserDetails, error) {
+	if u.detailCache != nil {
+		return u.detailCache, nil
+	}
+	details := &UserDetails{
 		MonoLink: *dynamo.NewMonoLink(u),
 	}
-	loaded, err := u.Details.Get(ctx, u.Details)
+	loaded, err := details.Get(ctx, details)
 	if err != nil {
 		logrus.WithError(err).Error("failed to get user cache")
 	}
 	if !loaded {
 		return nil, err
 	}
-	return u.Details, nil
+	u.detailCache = details
+	return details, nil
 }
 
 // Memberships returns the office memberships for the user.

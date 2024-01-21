@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/entegral/gobox/dynamo"
 	"github.com/entegral/officebuddy/types"
@@ -22,6 +21,9 @@ func (r *mutationResolver) Users(ctx context.Context, input []*types.UserSaver) 
 		}
 		u.UserDetails.MonoLink = *dynamo.NewMonoLink(&u.User)
 		err = u.Put(ctx, &u.UserDetails)
+		if err != nil {
+			return nil, err
+		}
 		ret = append(ret, &u.User)
 	}
 	return ret, nil
@@ -31,7 +33,7 @@ func (r *mutationResolver) Users(ctx context.Context, input []*types.UserSaver) 
 func (r *queryResolver) Users(ctx context.Context, input []*types.UserFinder) ([]*types.User, error) {
 	ret := []*types.User{}
 	for _, u := range input {
-		loaded, err := u.Get(ctx, u)
+		loaded, err := u.User.Get(ctx, &u.User)
 		if err != nil {
 			return nil, err
 		}
@@ -42,45 +44,11 @@ func (r *queryResolver) Users(ctx context.Context, input []*types.UserFinder) ([
 	return ret, nil
 }
 
-// FirstName is the resolver for the firstName field.
-func (r *userResolver) FirstName(ctx context.Context, obj *types.User) (string, error) {
-	if obj.Details != nil {
-		return obj.Details.FirstName, nil
-	}
-	details, err := obj.GetDetails(ctx)
-	if err != nil {
-		return "", err
-	}
-	if details == nil {
-		return "", fmt.Errorf("user details not found")
-	}
-	return obj.Details.FirstName, nil
-}
-
-// LastName is the resolver for the lastName field.
-func (r *userResolver) LastName(ctx context.Context, obj *types.User) (string, error) {
-	if obj.Details != nil {
-		return obj.Details.LastName, nil
-	}
-	details, err := obj.GetDetails(ctx)
-	if err != nil {
-		return "", err
-	}
-	if details == nil {
-		return "", fmt.Errorf("user details not found")
-	}
-	return obj.Details.LastName, nil
-}
-
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-// User returns UserResolver implementation.
-func (r *Resolver) User() UserResolver { return &userResolver{r} }
-
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-type userResolver struct{ *Resolver }
