@@ -11,18 +11,17 @@ import (
 
 // Event struct represents an event with necessary fields.
 type Event struct {
-	dynamo.Row                    // Embedding dynamo.Row to inherit its fields and methods.
-	CreatedByEmail string         `json:"createdByEmail"` // The email of the user who created the event.
-	GUID           string         `json:"guid"`           // The unique identifier for the event.
-	Title          string         `json:"title"`          // The title of the event.
-	Description    string         `json:"description"`    // The description of the event.
-	Start          types.DateTime `json:"start"`          // The start time of the event.
-	End            types.DateTime `json:"end"`            // The end time of the event.
+	dynamo.Row                // Embedding dynamo.Row to inherit its fields and methods.
+	GUID       string         `json:"guid"`                 // The unique identifier for the event.
+	Start      types.DateTime `json:"start"`                // The start time of the event.
+	End        types.DateTime `json:"end"`                  // The end time of the event.
+	Details    *EventDetails  `json:"details" dynamoav:"-"` // The details of the event. Should be marshalled to json but not to dynamodb.
 }
 
 // EventInput struct is used for creating a new event.
 type EventInput struct {
 	Event // Embedding Event to inherit its fields and methods.
+	EventDetails
 }
 
 // Type method returns the type of the struct, in this case "event".
@@ -54,37 +53,49 @@ func (e *Event) Keys(gsi int) (string, string, error) {
 
 // NewEventOpts struct is used to pass options when creating a new event.
 type NewEventOpts struct {
-	GUID        *string
-	Title       *string
-	Description *string
-	Start       *types.DateTime
-	End         *types.DateTime
+	GUID *string
 }
 
 // NewEvent function creates a new event and returns it. If createdByEmail is empty, it returns an error.
-func NewEvent(ctx context.Context, createdByEmail string, opts *NewEventOpts) (*Event, error) {
-	if createdByEmail == "" {
-		return nil, fmt.Errorf("createdByEmail must not be empty")
-	}
+func NewEvent(ctx context.Context, title, description string, start, stop types.DateTime, opts *NewEventOpts) (*Event, error) {
 	event := &Event{
-		GUID:           uuid.UUIDv4(), // Generate a new UUID for the event.
-		CreatedByEmail: createdByEmail,
+		GUID: uuid.UUIDv4(), // Generate a new UUID for the event.
+		// CreatedByEmail: createdByEmail,
 	}
 	if opts.GUID != nil && *opts.GUID != "" {
 		event.GUID = *opts.GUID // If a GUID is provided in the options, use it instead of the generated one.
 	}
-	if opts.Title != nil && *opts.Title != "" {
-		event.Title = *opts.Title // If a title is provided in the options, use it.
+	if start.IsZero() {
+		return nil, fmt.Errorf("event start time must not be zero")
 	}
-	if opts.Description != nil && *opts.Description != "" {
-		event.Description = *opts.Description // If a description is provided in the options, use it.
+	if stop.IsZero() {
+		return nil, fmt.Errorf("event stop time must not be zero")
 	}
-	if opts.Start != nil {
-		event.Start = *opts.Start // If a start time is provided in the options, use it.
+	if opts == nil {
+		return event, nil
 	}
-	if opts.End != nil {
-		event.End = *opts.End // If an end time is provided in the options, use it.
+	details := &EventDetails{}
+	if title == "" {
+		return nil, fmt.Errorf("event title must not be empty")
 	}
-
+	details.Title = title
+	if description == "" {
+		return nil, fmt.Errorf("event description must not be empty")
+	}
+	details.Description = description
+	event.Details = details
 	return event, nil
+}
+
+// EventDetails struct represents the details of an event.
+type EventDetails struct {
+	dynamo.MonoLink[*Event]
+	CreatedByEmail string `json:"createdByEmail"` // The email of the user who created the event.
+	Title          string `json:"title"`          // The title of the event.
+	Description    string `json:"description"`    // The description of the event.
+}
+
+// Type method satisfies the Typeable interface.
+func (ed *EventDetails) Type() string {
+	return "EventDetails"
 }

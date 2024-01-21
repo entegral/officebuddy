@@ -9,7 +9,6 @@ type Event {
 }
 
 input EventInput {
-  createdByEmail: String!
   guid: String
   title: String!
   description: String!

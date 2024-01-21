@@ -3,13 +3,8 @@ type User {
   firstName: String!
   lastName: String!
   email: String!
-  Cache: UserCache
   Memberships(roles: [Role!]): [Membership!]
   Invites(status: [InviteStatus!]): [Invite!]
-}
-
-type UserCache {
-  HairStyle: String
 }
 
 input UserSaver {

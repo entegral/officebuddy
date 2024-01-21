@@ -9,44 +9,20 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type UserCache struct {
-	dynamo.MonoLink[*User]
-	HairStyle string `json:"hairStyle,omitempty"`
-}
-
-// Type returns the type of the entity.
-func (u *UserCache) Type() string {
-	return "UserCache"
-}
-
 // User is a user.
 type User struct {
 	dynamo.Row
-	GUID      string `json:"guid,omitempty"`
-	FirstName string `json:"firstName,omitempty"`
-	LastName  string `json:"lastName,omitempty"`
-	Email     string `json:"email,omitempty"`
+	GUID  string `json:"guid,omitempty"`
+	Email string `json:"email,omitempty"`
 	// AdminOf   []*Office `json:"adminOf,omitempty"`
+
+	// MonoLinks
+	Details *UserDetails `json:"details,omitempty" dynamoav:"-"`
 }
 
 // Type returns the type of the entity.
 func (u *User) Type() string {
 	return "User"
-}
-
-// Cache returns the cache for the user.
-func (u *User) Cache(ctx context.Context) (*UserCache, error) {
-	uc := UserCache{
-		MonoLink: *dynamo.NewMonoLink(u),
-	}
-	loaded, err := uc.Get(ctx, &uc)
-	if err != nil {
-		logrus.WithError(err).Error("failed to get user cache")
-	}
-	if !loaded {
-		return nil, err
-	}
-	return &uc, nil
 }
 
 // Keys returns the partition key and sort key for the given GSI.
@@ -88,12 +64,35 @@ func NewUser(ctx context.Context, guid, email, fname, lname string) (*User, erro
 	if guid == "" {
 		guid = uuid.UUIDv4()
 	}
-	return &User{
-		Email:     email,
+	user := &User{
+		Email: email,
+		GUID:  guid,
+	}
+	details := &UserDetails{
+		MonoLink:  *dynamo.NewMonoLink(user),
 		FirstName: fname,
 		LastName:  lname,
-		GUID:      guid,
-	}, nil
+	}
+	user.Details = details
+	return user, nil
+}
+
+// GetDetails returns the user details, if it isnt present, it loads them from dynamo.
+func (u *User) GetDetails(ctx context.Context) (*UserDetails, error) {
+	if u.Details != nil {
+		return u.Details, nil
+	}
+	u.Details = &UserDetails{
+		MonoLink: *dynamo.NewMonoLink(u),
+	}
+	loaded, err := u.Details.Get(ctx, u.Details)
+	if err != nil {
+		logrus.WithError(err).Error("failed to get user cache")
+	}
+	if !loaded {
+		return nil, err
+	}
+	return u.Details, nil
 }
 
 // Memberships returns the office memberships for the user.
