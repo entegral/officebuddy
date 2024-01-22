@@ -26,7 +26,7 @@ type EventInput struct {
 
 // Type method returns the type of the struct, in this case "event".
 func (e *Event) Type() string {
-	return "event"
+	return "Event"
 }
 
 // Keys method generates and returns the primary and secondary keys for the event based on the given Global Secondary Index (gsi).

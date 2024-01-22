@@ -19,7 +19,7 @@ type Office struct {
 
 // Type method returns the type of the struct, in this case "office".
 func (o *Office) Type() string {
-	return "office"
+	return "Office"
 }
 
 // NewOffice is a function that creates a new office. It requires a name, a createdBy identifier, a guid, a description, and an address.

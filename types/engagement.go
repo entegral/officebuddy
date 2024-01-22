@@ -13,7 +13,7 @@ type Engagement struct {
 
 // Type returns the type of the entity.
 func (e *Engagement) Type() string {
-	return "engagement"
+	return "Engagement"
 }
 
 // User is the resolver for the user field.

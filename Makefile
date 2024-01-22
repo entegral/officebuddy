@@ -1,3 +1,5 @@
+.PHONY: build start generate test
+
 build:
 	go mod vendor
 	docker build --tag obuddies .
@@ -8,3 +10,10 @@ start:
 
 generate:
 	go run github.com/99designs/gqlgen generate
+
+test:
+	go mod vendor
+	docker-compose up --build --abort-on-container-exit
+	docker-compose down
+	rm -rf vendor
+	

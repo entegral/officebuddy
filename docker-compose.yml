@@ -1,0 +1,13 @@
+version: '3'
+services:
+  localstack:
+    image: localstack/localstack
+    ports:
+      - "4566:4566"
+  officebuddy:
+    build:
+      context: .
+      target: test
+    depends_on:
+      - localstack
+    command: ["go", "test", "-v", "./..."]
